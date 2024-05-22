@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jearn Testing</title>
+</head>
+<body>
+    <form action = "/register" method="POST">
+        <br>
+        <div>
+            <label>What is your age?</label><br>
+            <input name="age" type="number" min="1" oninput="validateInput(this)" placeholder="what grade are you in?">
+        </div>
+        <br>
+        <div>
+            <input type="text" id="textInput" placeholder="Type something...">
+            <button onclick="addText()">Add</button>
+            
+            <ul id="textList"></ul>
+            
+        </div>
+        <br>
+        <button type = "submit">Submit</button>
+</body>
+<script>
+    function addText() {
+        const textInput = document.getElementById('textInput');
+        const textValue = textInput.value.trim();
+
+        if (textValue) {
+            const textList = document.getElementById('textList');
+
+            const listItem = document.createElement('li');
+            listItem.className = 'entry';
+
+            const textNode = document.createElement('input');
+            textNode.type = 'text';
+            textNode.value = textValue;
+            textNode.readOnly = true;
+
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.onclick = () => textList.removeChild(listItem);
+
+            listItem.appendChild(textNode);
+            listItem.appendChild(removeButton);
+
+            textList.appendChild(listItem);
+
+            textInput.value = ''; // Clear the input field
+        }
+    }
+</script>
+</html>
