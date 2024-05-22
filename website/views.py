@@ -1,7 +1,8 @@
 from flask import Flask, Blueprint, render_template, request, url_for, redirect, session, flash
 from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash 
-from .models import Users
+from .models import Users, UserPreferences
+from flask_login import login_user, logout_user, login_required, UserMixin, current_user
 from . import gpt
 
 from . import app, db
@@ -28,6 +29,7 @@ def register():
             new_user = Users(username = username, email=email, password=generate_password_hash(password1))
             db.session.add(new_user)
             db.session.commit()
+            login_user(new_user)
             session['loggedin'] = True
             flash('sign up sucessful', 'info')
             return redirect(url_for('views.personalize'))
@@ -35,6 +37,16 @@ def register():
     
 @views.route('/personalize', methods = ['GET', 'POST'])
 def personalize():
+    if request.method == "POST":
+        age = request.form.get('age')
+        language = request.form.get('language')
+        subjects = request.form.get('subjects')
+        id = current_user.id
+        usercreds = UserPreferences(user_id = id, age = age, language = language, subjects=subjects)
+        db.session.add(usercreds)
+        db.session.commit()
+        return redirect(url_for(views.home))
+
     return render_template('personalize.html')
     #if request.method == 'POST':
 

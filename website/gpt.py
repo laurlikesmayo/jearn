@@ -19,3 +19,22 @@ def chat(prompt, age, language):
 )
     return response.choices[0].message.content
 
+def maketest(prompt, subject, age, format):
+    response = client.chat.completions.create(
+    model = "gpt-3.5-turbo",
+    messages = [
+        {"role": "system", "content": f"You are a {subject} teacher creating a test. The level of the test should be for a {age} year old."},
+        {"role": "system", "content":"after every question, can you put the word 'SPLITHERE' so i can split it in my python code?"},
+        {"role": "system", "content": "do not include an intro, just start straight form the questions."},
+        {"role": "user", "content": f"create a {format} test for the user about the topic {prompt}. After that, print the word 'ANSWERS' and list the answers. Dont say the answer, just list the alphabet after every answer, put the word 'SPLITHERE'"},
+    ]
+    )
+    questions = response.choices[0].message.content
+    questions = questions.split("SPLITHERE")
+    answers = response.choices[0].message.content
+    answers = answers.split("SPLITHERE")
+    return questions, answers
+
+
+
+print(maketest("cellular respiration", "science", 10, "multiple choice"))
