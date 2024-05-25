@@ -26,15 +26,16 @@ def maketest(prompt, subject, age, format):
         {"role": "system", "content": f"You are a {subject} teacher creating a test. The level of the test should be for a {age} year old."},
         {"role": "system", "content":"after every question, can you put the word 'SPLITHERE' so i can split it in my python code?"},
         {"role": "system", "content": "do not include an intro, just start straight form the questions."},
-        {"role": "user", "content": f"create a {format} test for the user about the topic {prompt}. After that, print the word 'ANSWERS' and list the answers. Dont say the answer, just list the alphabet after every answer, put the word 'SPLITHERE'"},
+        {"role": "user", "content": f"create a {format} test for the user about the topic {prompt}. After that, print the word 'ANSWERS' and list the answers. list the answers, and after each answer listed put the word 'SPLITHERE'"},
     ]
     )
-    questions = response.choices[0].message.content
-    questions = questions.split("SPLITHERE")
-    answers = response.choices[0].message.content
-    answers = answers.split("SPLITHERE")
+
+    reply = response.choices[0].message.content
+    reply = reply.split("ANSWERS")
+    questions = reply[0].split("SPLITHERE")
+    answers = reply[1].split('SPLITHERE')
     return questions, answers
 
 
 
-print(maketest("cellular respiration", "science", 10, "multiple choice"))
+print(maketest("cellular respiration", "science", 10, "written"))

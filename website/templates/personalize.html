@@ -7,7 +7,7 @@
 </head>
 <body>
     <p>This is all confidential information. This will not get shared with anyone else.</p>
-    <form action = "/register" method="POST">
+    <form id="myForm" action="/register" method="POST">
         <br>
         <div>
             <label>What is your age?</label><br>
@@ -15,46 +15,61 @@
         </div>
         <br>
         <div>
-            <label>What language are you most familliar with?</label><br>
+            <label>What language are you most familiar with?</label><br>
             <input name="language" type="text" placeholder="Input your language">
         </div>
         <div>
-            <input name = 'subjects' type="text" id="textInput" placeholder="interested subjects">
-            <button onclick="addText()">Add</button>
+            <input type="text" id="textInput" placeholder="Interested subjects">
+            <button type="button" onclick="addText()">Add</button>
             
             <ul id="textList"></ul>
-            
         </div>
         <br>
-        <button type = "submit">Submit</button>
-</body>
-<script>
-    function addText() {
-        const textInput = document.getElementById('textInput');
-        const textValue = textInput.value.trim();
+        <input type="hidden" name="subjects" id="subjectsInput">
+        <button type="submit">Submit</button>
+    </form>
 
-        if (textValue) {
-            const textList = document.getElementById('textList');
+    <script>
+        function addText() {
+            const textInput = document.getElementById('textInput');
+            const textValue = textInput.value.trim();
 
-            const listItem = document.createElement('li');
-            listItem.className = 'entry';
+            if (textValue) {
+                const textList = document.getElementById('textList');
 
-            const textNode = document.createElement('input');
-            textNode.type = 'text';
-            textNode.value = textValue;
-            textNode.readOnly = true;
+                const listItem = document.createElement('li');
+                listItem.className = 'entry';
 
-            const removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
-            removeButton.onclick = () => textList.removeChild(listItem);
+                const textNode = document.createElement('input');
+                textNode.type = 'text';
+                textNode.value = textValue;
+                textNode.readOnly = true;
 
-            listItem.appendChild(textNode);
-            listItem.appendChild(removeButton);
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.onclick = () => textList.removeChild(listItem);
 
-            textList.appendChild(listItem);
+                listItem.appendChild(textNode);
+                listItem.appendChild(removeButton);
 
-            textInput.value = ''; // Clear the input field
+                textList.appendChild(listItem);
+
+                textInput.value = ''; // Clear the input field
+                updateHiddenInput();
+            }
         }
-    }
-</script>
+
+        function updateHiddenInput() {
+            const subjects = [];
+            document.querySelectorAll('#textList .entry input[type="text"]').forEach(input => {
+                subjects.push(input.value);
+            });
+            document.getElementById('subjectsInput').value = JSON.stringify(subjects);
+        }
+
+        document.getElementById('myForm').addEventListener('submit', function(event) {
+            updateHiddenInput();
+        });
+    </script>
+</body>
 </html>

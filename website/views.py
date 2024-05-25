@@ -1,9 +1,10 @@
-from flask import Flask, Blueprint, render_template, request, url_for, redirect, session, flash
+from flask import Flask, Blueprint, render_template, request, url_for, redirect, session, flash, jsonify
 from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash 
 from .models import Users, UserPreferences
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
 from . import gpt
+import json
 
 from . import app, db
 views = Blueprint("views", __name__)
@@ -41,6 +42,8 @@ def personalize():
         age = request.form.get('age')
         language = request.form.get('language')
         subjects = request.form.get('subjects')
+        if subjects:
+            subjects = json.loads(subjects)
         id = current_user.id
         usercreds = UserPreferences(user_id = id, age = age, language = language, subjects=subjects)
         db.session.add(usercreds)
@@ -58,6 +61,9 @@ def home():
         prompt = request.form.get("prompt")
         language = request.form.get("language")
         reply = gpt.chat(prompt, age, language)
-        return render_template("test.html", reply = reply)
+        return render_template("home.html", reply = reply)
     else:
-        return render_template("test.html", response = "")
+        return render_template("home.html", response = "")
+    
+@views.route('/test', methods = ['GET', 'POST'])
+def test():

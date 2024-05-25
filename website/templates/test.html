@@ -3,20 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jearn Testing</title>
+    <title>Make a test</title>
 </head>
 <body>
-    <form method = "POST">
-        <label>ChatGPT Preference</label>
-        <input name="age" type="number" placeholder="what grade are you in?">
-        <input name="prompt" type="text" placeholder="What are you interested in?">
-        <input name="language" type="text" placeholder="languyage">
-        <input type="submit">	
+    <form action = "/maketest" method="POST">
+        <div>
+            <label for="email">What subject?</label><br>
+            <input id="subject" name="subject" type="text" placeholder="Enter the subject">
+        </div>
+        <br>
+
+        <div>
+            <label for="topic">What topic are you tested on?</label><br>
+            <input id="topic" name="topic" type="text" placeholder="Enter the topic">
+        </div> 
 
     </form>
-    
-    <h1> ChatGPT Reply</h1>
-    <p> {{reply}}</p>
 
+    {% for question in questions %}
+    {% question = question.split("\n")%}
+    {% for i in question %}
+    <p>{{i}}</p>
+    {% endfor %}
+    {% endfor %}
 </body>
 </html>
