@@ -8,7 +8,32 @@ import json
 
 from . import app, db
 views = Blueprint("views", __name__)
-
+@views.route('/login',  methods=['GET', 'POST'] )
+def login():
+    if request.method == "POST":
+        username = request.form.get('username')
+        password = request.form.get('password')
+        permanentsesh =request.form.get('permanentsession')
+        user = Users.query.filter_by(username=username).first()
+        if user:
+            if check_password_hash(user.password, password):
+                login_user(user, remember=user.email)
+                print('Logged in')
+                if permanentsesh:
+                    session.permanent = True
+                else:
+                    session.permanent = False
+                session['loggedin'] = True
+                session['email'] = user.email
+                flash('Log in sucessful', 'info ')
+                return redirect(url_for('views.home')) 
+            else:
+                flash('Wrong Password')
+        else:
+            flash('Username does not exist')
+                
+                
+    return render_template("login.html")
 
 @views.route('/register', methods = ['GET', 'POST'])
 def register():
@@ -35,7 +60,7 @@ def register():
             flash('sign up sucessful', 'info')
             return redirect(url_for('views.personalize'))
     return render_template('register.html')    
-    
+
 @views.route('/personalize', methods = ['GET', 'POST'])
 def personalize():
     if request.method == "POST":
@@ -65,5 +90,29 @@ def home():
     else:
         return render_template("home.html", response = "")
     
-@views.route('/test', methods = ['GET', 'POST'])
-def test():
+
+@views.route('/dangerous')
+def dangerous():
+    
+    users = Users.query
+    for i in users:
+        db.session.delete(i)
+    
+    db.session.commit()
+    return render_template('dangerous.html')
+    
+@views.route('/createtest', methods = ['GET', 'POST'])
+def create_test():
+    if(request.method == "POST"):
+        userpref = UserPreferences.query.filter_by(user_id=current_user.id)
+        prompt = request.form.get("prompt")
+        subject = request.form.get("subject")
+        formats = request.form.get("format")
+        return redirect(url_for("views.test", age=userpref.age, prompt=prompt, formats=formats, subject=subject))
+    return render_template("create_test.html")
+
+@views.route("test", methods=['GET', 'POST'])
+def test(age, prompt, formats, subject):
+    questions, answers = gpt.maketest(prompt, subject, age, formats)
+    return render_template('test.html', questions=questions, formats = formats, answers=answers)
+

@@ -3,6 +3,7 @@ from datetime import timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from os import path
+from flask_login import LoginManager
 from sqlalchemy import MetaData
 convention={
     "ix": 'ix_%(column_0_label)s',
@@ -28,6 +29,11 @@ def createapp():
     app.config['SECRET_KEY']='hello'
     app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///database.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS']= False
+
+    login_manager = LoginManager()
+
+    login_manager.login_view = '/'  # The view to redirect to when the user needs to log in
+
     
     db.init_app(app)
     #gets all the website routes from views.py
