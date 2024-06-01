@@ -35,7 +35,7 @@ def login():
                 
     return render_template("login.html")
 
-@views.route('/register', methods = ['GET', 'POST'])
+@views.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form.get('username')
@@ -43,23 +43,28 @@ def register():
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
-        username_exists = Users.query.filter_by(username = username).first()
-        email_exists = Users.query.filter_by(email = email).first()
-        if password1 != password2:
+        if not username or not password1:
+            flash("Username or password cannot be empty!")
+        elif len(password1) < 6 or len(username) < 6:
+            flash("Username and password must contain at least 6 characters!")
+        elif password1 != password2:
             flash("Passwords don't match!")
-        elif username_exists or email_exists:
-            flash('username or email already exists!')
-        elif len(password1) < 6 or len(username) <6:
-            flash("Username or password must contain more than 6 characters")
         else:
-            new_user = Users(username = username, email=email, password=generate_password_hash(password1))
-            db.session.add(new_user)
-            db.session.commit()
-            login_user(new_user)
-            session['loggedin'] = True
-            flash('sign up sucessful', 'info')
-            return redirect(url_for('views.personalize'))
-    return render_template('register.html')    
+            username_exists = Users.query.filter_by(username=username).first()
+            email_exists = Users.query.filter_by(email=email).first()
+            if username_exists or email_exists:
+                flash('Username or email already exists!')
+            else:
+                new_user = Users(username=username, email=email, password=generate_password_hash(password1))
+                db.session.add(new_user)
+                db.session.commit()
+                login_user(new_user)
+                session['loggedin'] = True
+                flash('Sign up successful', 'info')
+                return redirect(url_for('views.personalize'))
+
+    return render_template('register.html')
+   
 
 @views.route('/personalize', methods = ['GET', 'POST'])
 def personalize():
@@ -73,7 +78,7 @@ def personalize():
         usercreds = UserPreferences(user_id = id, age = age, language = language, subjects=subjects)
         db.session.add(usercreds)
         db.session.commit()
-        return redirect(url_for(views.home))
+        return redirect(url_for("views.home"))
 
     return render_template('personalize.html')
     #if request.method == 'POST':
@@ -88,7 +93,7 @@ def home():
         reply = gpt.chat(prompt, age, language)
         return render_template("home.html", reply = reply)
     else:
-        return render_template("home.html", response = "")
+        return render_template("home.html")
     
 
 @views.route('/dangerous')

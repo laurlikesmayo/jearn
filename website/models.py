@@ -21,6 +21,7 @@ class UserPreferences(db.Model, UserMixin):
     id = db.Column("id", db.Integer, primary_key = True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     age = db.Column(db.Integer, default = 20)
+    language = db.Column(db.String(50), default = "English")
     subjects = db.Column(db.JSON, default=default_list)
     strengths = db.Column(db.JSON, default=default_list)
     weaknesses = db.Column(db.JSON, default=default_list)
