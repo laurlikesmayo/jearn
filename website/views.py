@@ -82,14 +82,15 @@ def personalize():
 
     return render_template('personalize.html')
     #if request.method == 'POST':
-
+    
+@login_required
 @views.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == "POST":
-        age = request.form.get("age")
-        print(age)
+        user = UserPreferences.query.filter_by(user_id=current_user.id)
+        age = user.age
+        language = user.language
         prompt = request.form.get("prompt")
-        language = request.form.get("language")
         reply = gpt.chat(prompt, age, language)
         return render_template("home.html", reply = reply)
     else:
