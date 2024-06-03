@@ -6,13 +6,13 @@
     <title>asdfasdf</title>
 </head>
 <body>
-    {% if formats == "mcq" %}
-    {% for question in questions%}
-    {% lines = question.split('\n')%}
-    {% for line in lines %}
-    <p>{{line}}</p>
-    {% endfor %}
-    {% endfor %}
+    {% if formats.lower() == "mcq" %}
+        {% for question in questions%}
+            {% set lines = question.split('\n')%}
+            {% for line in lines %}
+                <p>{{line}}</p>
+            {% endfor %}
+        {% endfor %}
     {% endif %}
 </body>
 </html>

@@ -73,6 +73,7 @@ def personalize():
             subjects = json.loads(subjects)
         id = current_user.id
         usercreds = UserPreferences(user_id = id, age = age, language = language, subjects=subjects)
+        print(str(age), language)
         db.session.add(usercreds)
         db.session.commit()
         return redirect(url_for("views.home"))
@@ -80,13 +81,14 @@ def personalize():
     return render_template('personalize.html')
     #if request.method == 'POST':
     
-@login_required
+
 @views.route('/', methods=['GET', 'POST'])
+@login_required
 def home():
     if current_user.is_authenticated:
         print('logged in')
     if request.method == "POST":
-        user = UserPreferences.query.filter_by(user_id=current_user.id)
+        user = UserPreferences.query.filter_by(user_id=current_user.id).first()
         age = user.age
         language = user.language
         prompt = request.form.get("prompt")
@@ -105,19 +107,24 @@ def dangerous():
     
     db.session.commit()
     return render_template('dangerous.html')
-    
+
 @views.route('/createtest', methods = ['GET', 'POST'])
+@login_required
 def create_test():
     if(request.method == "POST"):
-        userpref = UserPreferences.query.filter_by(user_id=current_user.id)
+        userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         prompt = request.form.get("prompt")
-        subject = request.form.get("subject")
         formats = request.form.get("format")
-        return redirect(url_for("views.test", age=userpref.age, prompt=prompt, formats=formats, subject=subject))
+        return redirect(url_for("views.test", age=userpref.age, prompt=prompt, formats=formats))
     return render_template("create_test.html")
 
-@views.route("test", methods=['GET', 'POST'])
-def test(age, prompt, formats, subject):
-    questions, answers = gpt.maketest(prompt, subject, age, formats)
-    return render_template('test.html', questions=questions, formats = formats, answers=answers)
+@login_required
+@views.route("/test", methods=['GET', 'POST'])
+def test():
+    age = request.args.get('age')
+    prompt = request.args.get('prompt')
+    formats = request.args.get('formats')
+
+    questions, choices, answers = gpt.maketest(prompt, age, formats)
+    return render_template('test.html', questions=questions, choices = choices, formats = formats)
 

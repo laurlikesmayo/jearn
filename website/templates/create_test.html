@@ -3,16 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Make a test</title>
+    <title>Create a test</title>
 </head>
 <body>
-    <form action = "/maketest" method="POST">
-        <div>
-            <label for="email">What subject?</label><br>
-            <input id="subject" name="subject" type="text" placeholder="Enter the subject">
-        </div>
-        <br>
-
+    <form action = "/createtest" method="POST">
         <div>
             <label for="topic">What topic are you tested on?</label><br>
             <input id="topic" name="topic" type="text" placeholder="Enter the topic">
@@ -22,6 +16,8 @@
             <label for="format">What format are you tested on?</label><br>
             <input id="format" name="format" type="text" placeholder="Enter the format">
         </div> 
+
+        <button type = "submit">Submit</button>
 
 
     </form>

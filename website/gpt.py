@@ -19,23 +19,49 @@ def chat(prompt, age, language):
 )
     return response.choices[0].message.content
 
-def maketest(prompt, subject, age, format):
+def maketest(prompt, age, format):
+    choice = []
+    answers = []
     response = client.chat.completions.create(
-    model = "gpt-3.5-turbo",
-    messages = [
-        {"role": "system", "content": f"You are a {subject} teacher creating a test. The level of the test should be for a {age} year old."},
-        {"role": "system", "content":"after every question, can you put the word 'SPLITHERE' so i can split it in my python code?"},
-        {"role": "system", "content": "do not include an intro, just start straight form the questions."},
-        {"role": "user", "content": f"create a {format} test for the user about the topic {prompt}. After that, print the word 'ANSWERS' and list the answers. list the answers, and after each answer listed put the word 'SPLITHERE'"},
-    ]
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": f"You are a teacher creating a test. The level of the test should be for a {age} year old."},
+            {"role": "system", "content": f"create a {format} test for the user about the topic {prompt}. "},
+            {"role": "user", "content": "first, give me the list of questions (NOT NUMBERED)"},
+        ]
     )
-
     reply = response.choices[0].message.content
-    reply = reply.split("ANSWERS")
-    questions = reply[0].split("SPLITHERE")
-    answers = reply[1].split('SPLITHERE')
-    return questions, answers
+    questions = reply.split('\n')
+    for i in range(len(questions)):
+        if format.lower() == "mcq":
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": f"Given this question {questions[i]}, give me a list of multiple choice answers,"}]
+            )
+            Qchoice = response.choices[0].message.content.split("\n")
+            choice.append(Qchoice)
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": f"GIVE ME NO EXPLINATION, INTRO, OR WHATEVER. JUST GIVE ME PURELY WHAT I ASK FOR BELOW"},
+                    {"role": "user", "content": f"Given this question {questions[i]}, and given this list of possible answers {Qchoice}, return me the INDEX of which answer is correct in the list"}]
+            )
+            answer = (response.choices[0].message.content).split("Index")
+            answers.append(answer)
+        else:
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": f"GIVE ME NO EXPLINATION, INTRO, OR WHATEVER. JUST GIVE ME PURELY WHAT I ASK FOR BELOW"},
+                    {"role": "user", "content": f"Given this question {questions[i]}, give me the answer to that question"}]
+            )
+            answer = (response.choices[0].message.content)
+            answers.append(answer)
+
+        
+    return questions, choice, answers
 
 
 
-print(maketest("cellular respiration", "science", 10, "written"))
+
+print(maketest("cellular respiration", 10, "mcq"))
