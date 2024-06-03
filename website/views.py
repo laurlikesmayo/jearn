@@ -13,16 +13,13 @@ def login():
     if request.method == "POST":
         username = request.form.get('username')
         password = request.form.get('password')
-        permanentsesh =request.form.get('permanentsession')
+        permanentsesh = request.form.get('permanentsession') == 'true' #returns bool
         user = Users.query.filter_by(username=username).first()
         if user:
             if check_password_hash(user.password, password):
-                login_user(user, remember=user.email)
+                login_user(user, remember=permanentsesh)
                 print('Logged in')
-                if permanentsesh:
-                    session.permanent = True
-                else:
-                    session.permanent = False
+                session.permanet = permanentsesh
                 session['loggedin'] = True
                 session['email'] = user.email
                 flash('Log in sucessful', 'info ')
@@ -86,6 +83,8 @@ def personalize():
 @login_required
 @views.route('/', methods=['GET', 'POST'])
 def home():
+    if current_user.is_authenticated:
+        print('logged in')
     if request.method == "POST":
         user = UserPreferences.query.filter_by(user_id=current_user.id)
         age = user.age

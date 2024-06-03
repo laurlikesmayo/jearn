@@ -19,6 +19,7 @@ app.secret_key = 'hello'
 app.permanent_session_lifetime = timedelta(days=5)
 app.config['SECRET_KEY'] = 'hello'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize extensions
