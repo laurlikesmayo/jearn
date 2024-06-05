@@ -6,13 +6,20 @@
     <title>asdfasdf</title>
 </head>
 <body>
-    {% if formats.lower() == "mcq" %}
-        {% for question in questions%}
-            {% set lines = question.split('\n')%}
-            {% for line in lines %}
-                <p>{{line}}</p>
+    <form method = "POST">
+    {% for i in range(questions | length)%}
+            <h1>{{questions[i]}}</h1>
+        {% if formats.lower() == "mcq" %}   
+            {% for j in range(choices[i] | length)%}
+            <p>{{choices[i][j]}}</p>
             {% endfor %}
+            <br>
+        {% else %}
+        <input id="answer" name="answer" type="text" placeholder="Enter your answer">
+        {% endif %}
         {% endfor %}
-    {% endif %}
+    </form>
+
+    
 </body>
 </html>

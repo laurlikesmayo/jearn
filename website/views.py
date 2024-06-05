@@ -113,9 +113,9 @@ def dangerous():
 def create_test():
     if(request.method == "POST"):
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-        prompt = request.form.get("prompt")
+        topic = request.form.get("topic")
         formats = request.form.get("format")
-        return redirect(url_for("views.test", age=userpref.age, prompt=prompt, formats=formats))
+        return redirect(url_for("views.test", age=userpref.age, prompt=topic, formats=formats))
     return render_template("create_test.html")
 
 @login_required
