@@ -114,6 +114,7 @@ def create_test():
     if(request.method == "POST"):
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         topic = request.form.get("topic")
+        session['topic'] = topic
         formats = request.form.get("format")
         return redirect(url_for("views.test", age=userpref.age, prompt=topic, formats=formats))
     return render_template("create_test.html")
@@ -121,10 +122,28 @@ def create_test():
 @login_required
 @views.route("/test", methods=['GET', 'POST'])
 def test():
-    age = request.args.get('age')
-    prompt = request.args.get('prompt')
-    formats = request.args.get('formats')
+    if(request.method == "POST"):
+        return redirect(url_for("views.checktest"))
+    else:
+        age = request.args.get('age')
+        prompt = request.args.get('prompt')
+        formats = request.args.get('formats')
 
-    questions, choices, answers = gpt.maketest(prompt, age, formats)
-    return render_template('test.html', questions=questions, choices = choices, formats = formats)
+        questions, choices, gptans = gpt.maketest(prompt, age, formats)
+        session['gptans'] = gptans
+        session['format'] = formats
+        session['questions'] = questions
+        return render_template('test.html', questions=questions, choices = choices, formats = formats)
 
+@login_required
+@views.route("/checktest", methods=['GET', 'POST'])
+def checktest():
+    userans = request.form.getlist("answer")
+    gptans = session.get("gptans")
+    formats = session.get("format")
+    questions = session.get("questions")
+    topic = session.get("topic").split(" ").strip().lower()
+    correctans = gpt.checktest(userans, gptans, formats)
+    gpt.sandw(correctans, current_user.id, topic)
+    return render_template('check_test.html', correctans = correctans, questions=questions)
+    

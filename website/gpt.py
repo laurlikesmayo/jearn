@@ -1,5 +1,7 @@
 from openai import OpenAI
 # Set your OpenAI API key
+from .models import Users, UserPreferences
+from . import app, db
 from dotenv import load_dotenv
 import os
 def configure():
@@ -21,7 +23,7 @@ def chat(prompt, age, language):
 
 def maketest(prompt, age, format):
     choice = []
-    answers = []
+    gptans = []
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -47,7 +49,7 @@ def maketest(prompt, age, format):
             )
             answer = (response.choices[0].message.content).split(" ")
             answer = answer[0].split(".")
-            answers.append(answer[0])
+            gptans.append(answer[0])
         else:
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -56,12 +58,43 @@ def maketest(prompt, age, format):
                     {"role": "user", "content": f"Given this question {questions[i]}, give me a concise answer to that question"}]
             )
             answer = response.choices[0].message.content
-            answers.append(answer)
+            gptans.append(answer)
 
         
-    return questions, choice, answers
+    return questions, choice, gptans
 
+def checktest(userans, gptans, formats):
+    correctans = []
+    for i in range(len(userans)):
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a teacher checking a student's test. Print 1 if the answer is correct, 0 if it is wrong. Do not include an intro/outro/explanation."},
+                {"role": "user", "content": f"Is the student's answer '{userans[i]}' along the same lines as the teacher's answer '{gptans[i]}'? If it is, print out 1; if it is not, print out 0."}
+            ]
+        )
+        
+        # Assuming response.choices[0].message.content contains the expected output
+        check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
+        correctans.append([check, gptans[i]])
 
+    return correctans
 
+def testsandw(correctans, userid, topic):
+    score = 0
+    for i in len(correctans):
+        score += int(correctans[i][0])
+        score = score/len(correctans)
 
-#print(maketest("cellular respiration", 10, "written"))
+    userpref = UserPreferences.query.filter_by(user_id=userid).first()
+
+    if score>0.8 and topic not in userpref.strenghts:
+        userpref.strengths.append(topic)
+        if topic in userpref.weaknesses:
+            userpref.weaknesses.remove(topic)
+        db.session.commit
+    elif topic not in userpref.weaknesses:
+        userpref.weaknesses.append(topic)
+        if topic in userpref.strengths:
+            userpref.strengths.remove(topic)
+        db.session.commit()

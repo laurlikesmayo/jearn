@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check your test answers!</title>
+</head>
+<body>
+    {% for i in range(correctans | length) %}
+        {% if correctans[i][0] == "1" %}
+            <p>{{i+1}}. {{questions[i]}}</p>
+            <p>Your answer is correct!</p>
+            <p>{{ correctans[i][1] }}</p>
+        {% elif correctans[i][0] == "0" %}
+            <p>{{i+1}}. {{questions[i]}}</p>
+            <p>Sorry, your answer is wrong..</p>
+            <p>The answer was, "{{ correctans[i][1] }}"</p>
+        {% endif %}
+    {% endfor %}
+    
+    <a href="{{ url_for('views.create_test') }}" class="button">Create another test!</a>
+</body>
+</html>
