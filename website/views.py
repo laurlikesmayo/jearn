@@ -130,6 +130,8 @@ def test():
         formats = request.args.get('formats')
 
         questions, choices, gptans = gpt.maketest(prompt, age, formats)
+        questions = [item for item in questions if item.strip()]
+
         session['gptans'] = gptans
         session['format'] = formats
         session['questions'] = questions
@@ -142,8 +144,14 @@ def checktest():
     gptans = session.get("gptans")
     formats = session.get("format")
     questions = session.get("questions")
-    topic = session.get("topic").split(" ").strip().lower()
+    topic = session.get("topic").split(" ")[0].strip().lower()
     correctans = gpt.checktest(userans, gptans, formats)
-    gpt.sandw(correctans, current_user.id, topic)
+    gpt.testsandw(correctans, current_user.id, topic)
     return render_template('check_test.html', correctans = correctans, questions=questions)
+
+@login_required
+@views.route("/checksandw", methods=['GET', 'POST'])
+def checksandw():
+    userpref = UserPreferences.query.filter_by(userid=current_user.id).first()
+    return render_template("checksandw.html", strengths = userpref.strengths, weaknesses=userpref.weaknesses)
     

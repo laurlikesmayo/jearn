@@ -25,6 +25,7 @@ class UserPreferences(db.Model, UserMixin):
     subjects = db.Column(db.JSON, default=default_list)
     strengths = db.Column(db.JSON, default=default_list)
     weaknesses = db.Column(db.JSON, default=default_list)
+    dailytopic = db.Column(db.String(50), nullable = True)
 
 
 

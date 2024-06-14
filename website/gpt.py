@@ -1,24 +1,27 @@
-from openai import OpenAI
-# Set your OpenAI API key
+import openai
 from .models import Users, UserPreferences
 from . import app, db
+from random import randrange
 from dotenv import load_dotenv
 import os
+
 def configure():
     load_dotenv()
+
 # Create an OpenAI client instance
 configure()
 api_key = os.getenv('api_key')
-client = OpenAI(api_key = api_key)
+client = openai.OpenAI(api_key=api_key)
 
 def chat(prompt, age, language): 
     response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "system", "content": "talk in" + language},
-        {"role": "system", "content": "You are talking to a" + str(age) +"year old person"},
-        {"role": "user", "content": prompt},]
-)
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": f"talk in {language}"},
+            {"role": "system", "content": f"You are talking to a {age} year old person"},
+            {"role": "user", "content": prompt},
+        ]
+    )
     return response.choices[0].message.content
 
 def maketest(prompt, age, format):
@@ -37,7 +40,7 @@ def maketest(prompt, age, format):
         if format.lower() == "mcq":
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": f"Given this question {questions[i]}, generate four answer choices. Format each choice as a letter followed by the option text, e.g., 'A. Option 1'. "}]
+                messages=[{"role": "user", "content": f"Given this question '{questions[i]}', generate four answer choices. Format each choice as a letter followed by the option text, e.g., 'A. Option 1'."}]
             )
             Qchoice = response.choices[0].message.content.split("\n")
             choice.append(Qchoice)
@@ -45,22 +48,21 @@ def maketest(prompt, age, format):
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "system", "content": "Do not give an intro or outro. Only list the letter of the correct answer and not the actual answer itself."},
-                    {"role": "user", "content": f"Given this question: {questions[i]}, and given this list of possible answers: {Qchoice}, which letter is correct?"}]
+                    {"role": "user", "content": f"Given this question: '{questions[i]}', and given this list of possible answers: {Qchoice}, which letter is correct?"}]
             )
-            answer = (response.choices[0].message.content).split(" ")
+            answer = response.choices[0].message.content.split(" ")
             answer = answer[0].split(".")
             gptans.append(answer[0])
         else:
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": f"Do not give an intro or an outro."},
-                    {"role": "user", "content": f"Given this question {questions[i]}, give me a concise answer to that question"}]
+                    {"role": "system", "content": "Do not give an intro or an outro."},
+                    {"role": "user", "content": f"Given this question '{questions[i]}', give me a concise answer to that question"}]
             )
             answer = response.choices[0].message.content
             gptans.append(answer)
 
-        
     return questions, choice, gptans
 
 def checktest(userans, gptans, formats):
@@ -73,55 +75,89 @@ def checktest(userans, gptans, formats):
                 {"role": "user", "content": f"Is the student's answer '{userans[i]}' along the same lines as the teacher's answer '{gptans[i]}'? If it is, print out 1; if it is not, print out 0."}
             ]
         )
-        
-        # Assuming response.choices[0].message.content contains the expected output
-        check = response.choices[0].message.content.strip() # Strip any extraneous whitespace
+        check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
         correctans.append([check, gptans[i]])
 
     return correctans
 
 def testsandw(correctans, userid, topic):
-    score = 0
-    for i in len(correctans):
-        score += int(correctans[i][0])
-        score = score/len(correctans)
+    score = sum(int(ans[0]) for ans in correctans) / len(correctans)
 
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
 
-    if score>0.8 and topic not in userpref.strenghts:
-        userpref.strengths.append(topic)
+    if score > 0.8:
+        if topic not in userpref.strengths:
+            userpref.strengths.append(topic)
         if topic in userpref.weaknesses:
             userpref.weaknesses.remove(topic)
-        db.session.commit
-    elif topic not in userpref.weaknesses:
-        userpref.weaknesses.append(topic)
+    else:
+        if topic not in userpref.weaknesses:
+            userpref.weaknesses.append(topic)
         if topic in userpref.strengths:
             userpref.strengths.remove(topic)
-        db.session.commit()
+
+    db.session.commit()
 
 def strengthrec(userid):
-    userpref = UserPreferences.query.filter_by(user_id=userid)
+    userpref = UserPreferences.query.filter_by(user_id=userid).first()
     response = client.chat.completions.create(
-        model = "gpt 3.5-turbo",
-        messages = [
-            {"role": "system", "content": "Please dont add an intro, outro, or explination, just return what is asked."},
-            {"role": "user", "content": f"given that a student is very strong at {userpref.strengths}, recommend a topic that you think this student would be good at"}
-            ]
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return what is asked."},
+            {"role": "user", "content": f"Given that a student is very strong at {userpref.strengths}, recommend a topic that you think this student would be good at."}
+        ]
     )
-    response = response.choices[0].message.content.strip()
-    return response
+    return response.choices[0].message.content.strip()
 
-def strengthweak(userid):
-    userpref = UserPreferences.query.filter_by(user_id=userid)
+def weakrec(userid):
+    userpref = UserPreferences.query.filter_by(user_id=userid).first()
     response = client.chat.completions.create(
-        model = "gpt 3.5-turbo",
-        messages = [
-            {"role": "system", "content": "Please dont add an intro, outro, or explination, just return a direct answer what is asked."},
-            {"role": "user", "content": f"given that a student is very weak at {userpref.weaknesses} topics, which topic is most crucial and important that the student should leadn "}
-            ]
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"Given that a student is very weak at {userpref.weaknesses} topics, which topic is most crucial and important that the student should learn?"}
+        ]
     )
-    response = response.choices[0].message.content.strip()
-    return response
+    return response.choices[0].message.content.strip()
 
 
+def generateddoetopic(userid):
+    userpref = UserPreferences.query.filter_by(user_id=userid).first()
+    strenghts = userpref.strenghts
+    age = userpref.age
+    weaknesses= userpref.weaknesses
+    num = randrange(2)
+    #0 = learn new, 1 = revise, 2 = continue off strength
+    if num==0:
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"Recommend a random topic that a {age} year old should learn, which isnt {strenghts}, {weaknesses}"}
+        ]
+        )
+        return response.choices[0].message.content.strip()
+    if num==1:
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"A {age} year old user is interestd in {strenghts}. Please recommend a topic a continuation of this or similar to this."}
+        ]
+        )
+        return response.choices[0].message.content.strip()
+    else:
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"pick a random topic from {weaknesses}"}
+        ]
+        )
+        return response.choices[0].message.content.strip()
+        
+
+
+
+    
 
