@@ -75,7 +75,7 @@ def checktest(userans, gptans, formats):
         )
         
         # Assuming response.choices[0].message.content contains the expected output
-        check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
+        check = response.choices[0].message.content.strip() # Strip any extraneous whitespace
         correctans.append([check, gptans[i]])
 
     return correctans
@@ -98,3 +98,30 @@ def testsandw(correctans, userid, topic):
         if topic in userpref.strengths:
             userpref.strengths.remove(topic)
         db.session.commit()
+
+def strengthrec(userid):
+    userpref = UserPreferences.query.filter_by(user_id=userid)
+    response = client.chat.completions.create(
+        model = "gpt 3.5-turbo",
+        messages = [
+            {"role": "system", "content": "Please dont add an intro, outro, or explination, just return what is asked."},
+            {"role": "user", "content": f"given that a student is very strong at {userpref.strengths}, recommend a topic that you think this student would be good at"}
+            ]
+    )
+    response = response.choices[0].message.content.strip()
+    return response
+
+def strengthweak(userid):
+    userpref = UserPreferences.query.filter_by(user_id=userid)
+    response = client.chat.completions.create(
+        model = "gpt 3.5-turbo",
+        messages = [
+            {"role": "system", "content": "Please dont add an intro, outro, or explination, just return a direct answer what is asked."},
+            {"role": "user", "content": f"given that a student is very weak at {userpref.weaknesses} topics, which topic is most crucial and important that the student should leadn "}
+            ]
+    )
+    response = response.choices[0].message.content.strip()
+    return response
+
+
+
