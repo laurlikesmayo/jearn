@@ -1,0 +1,21 @@
+{% extends "index.html" %}
+<head>
+    <title>Jearn - ChatBot</title>
+</head>
+{% block content %}
+<body>
+    <form method = "POST">
+        <label>ChatGPT Preference</label>
+        <input name="age" type="number" placeholder="what grade are you in?">
+        <input name="prompt" type="text" placeholder="What are you interested in?">
+        <input name="language" type="text" placeholder="languyage">
+        <input type="submit">	
+
+    </form>
+    
+    <h1> ChatGPT Reply</h1>
+    <p> {{reply}}</p>
+
+</body>
+</html>
+{% endblock %}

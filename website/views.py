@@ -73,18 +73,17 @@ def personalize():
             subjects = json.loads(subjects)
         id = current_user.id
         usercreds = UserPreferences(user_id = id, age = age, language = language, subjects=subjects)
-        print(str(age), language)
         db.session.add(usercreds)
         db.session.commit()
-        return redirect(url_for("views.home"))
+        return redirect(url_for("views.home")) #CHANGE THIS TO DDOE HOME
 
     return render_template('personalize.html')
     #if request.method == 'POST':
     
 
-@views.route('/', methods=['GET', 'POST'])
+@views.route('/chatbot', methods=['GET', 'POST'])
 @login_required
-def home():
+def chatbot():
     if current_user.is_authenticated:
         print('logged in')
     if request.method == "POST":
@@ -93,9 +92,9 @@ def home():
         language = user.language
         prompt = request.form.get("prompt")
         reply = gpt.chat(prompt, age, language)
-        return render_template("home.html", reply = reply)
+        return render_template("chatbot.html", reply = reply)
     else:
-        return render_template("home.html")
+        return render_template("chatbot.html")
     
 
 @views.route('/dangerous')
@@ -114,7 +113,7 @@ def create_test():
     if(request.method == "POST"):
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         topic = request.form.get("topic")
-        session['topic'] = topic
+        session['testtopic'] = topic
         formats = request.form.get("format")
         return redirect(url_for("views.test", age=userpref.age, prompt=topic, formats=formats))
     return render_template("create_test.html")
@@ -123,13 +122,18 @@ def create_test():
 @views.route("/test", methods=['GET', 'POST'])
 def test():
     if(request.method == "POST"):
+        userans = []
+        for i in range(len(session.get('questions'))):
+            answer = request.form.get(f'answer{i}')
+            userans.append(answer)
+        session['userans'] = userans
         return redirect(url_for("views.checktest"))
     else:
         age = request.args.get('age')
         prompt = request.args.get('prompt')
         formats = request.args.get('formats')
 
-        questions, choices, gptans = gpt.maketest(prompt, age, formats)
+        questions, choices, gptans = gpt.create_test(prompt, age, formats)
         questions = [item for item in questions if item.strip()]
 
         session['gptans'] = gptans
@@ -140,11 +144,11 @@ def test():
 @login_required
 @views.route("/checktest", methods=['GET', 'POST'])
 def checktest():
-    userans = request.form.getlist("answer")
+    questions = session.get("questions")
+    userans = session.get("userans")
     gptans = session.get("gptans")
     formats = session.get("format")
-    questions = session.get("questions")
-    topic = session.get("topic").split(" ")[0].strip().lower()
+    topic = session.get("testtopic").split(" ")[0].strip().lower()
     correctans = gpt.checktest(userans, gptans, formats)
     gpt.testsandw(correctans, current_user.id, topic)
     return render_template('check_test.html', correctans = correctans, questions=questions)
@@ -152,6 +156,60 @@ def checktest():
 @login_required
 @views.route("/checksandw", methods=['GET', 'POST'])
 def checksandw():
-    userpref = UserPreferences.query.filter_by(userid=current_user.id).first()
-    return render_template("checksandw.html", strengths = userpref.strengths, weaknesses=userpref.weaknesses)
+    userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
+    userpref.strengths.append("mathematics")  # Correct spelling
+    db.session.commit()  # Don't forget to commit the change to the database
+    return render_template("checksandw.html", strengths=userpref.strengths, weaknesses=userpref.weaknesses)
     
+@login_required
+@views.route("/home", methods = ["GET", "POST"])
+def home():
+    if 'ddoetopic' not in session:
+        topic = gpt.ddoetopic(current_user.id, 0)
+        description = gpt.ddoedescription(current_user.id, topic)
+        examples = gpt.ddoeexamples(current_user.id, topic)
+        session['ddoetopic'] = topic #SET TIMING LATER
+        session['description'] = description
+        session['examples'] = examples
+    else:
+        topic = session.get('ddoetopic')
+        examples = session.get('examples')
+        description = session.get('description')
+            
+    return render_template('home.html', topic=topic, description = description, examples=examples)
+
+        
+        
+
+
+
+
+#INACTIVE ROUTES
+
+@login_required
+@views.route("/navbar")
+def navbar():
+    return render_template('index.html')
+
+@login_required
+@views.route("/articles")
+def articles():
+    return render_template('index.html')
+
+@login_required
+@views.route("/reels")
+def reels():
+    return render_template('index.html')
+
+@login_required
+@views.route("/account")
+def account():
+    return render_template('index.html')
+
+@login_required
+@views.route("/logout")
+def logout():
+    return render_template('index.html')
+
+
+

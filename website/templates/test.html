@@ -1,27 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "index.html" %}
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>Jearn - Custom Test</title>
 </head>
-<body>
-    <form method = "POST">
-    {% for i in range(questions | length)%}
-            <h1>{{questions[i]}}</h1>
+{% block content %}
+    <form method="POST">
+    {% for i in range(questions | length) %}
+        <h1>{{ questions[i] }}</h1>
         {% if formats.lower() == "mcq" %}   
-            {% for j in range(choices[i] | length)%}
-            <p>{{choices[i][j]}}</p>
+            {% for j in range(choices[i] | length) %}
+                <p>{{ choices[i][j] }}</p>
             {% endfor %}
             <br>
         {% else %}
-        <input id="answer" name="answer" type="text" placeholder="Enter your answer">
+            <input id="answer{{ i }}" name="answer{{ i }}" type="text" placeholder="Enter your answer">
         {% endif %}
-        {% endfor %}
-        <button type = "submit">Submit</button>
-
+    {% endfor %}
+        <button type="submit">Submit</button>
     </form>
-
-    
 </body>
 </html>
+
+{% endblock %}

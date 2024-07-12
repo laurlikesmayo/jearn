@@ -24,7 +24,7 @@ def chat(prompt, age, language):
     )
     return response.choices[0].message.content
 
-def maketest(prompt, age, format):
+def create_test(prompt, age, format):
     choice = []
     gptans = []
     response = client.chat.completions.create(
@@ -82,10 +82,10 @@ def checktest(userans, gptans, formats):
 
 def testsandw(correctans, userid, topic):
     score = sum(int(ans[0]) for ans in correctans) / len(correctans)
-
+    print(score)
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
 
-    if score > 0.8:
+    if score > 0.7:
         if topic not in userpref.strengths:
             userpref.strengths.append(topic)
         if topic in userpref.weaknesses:
@@ -93,6 +93,7 @@ def testsandw(correctans, userid, topic):
     else:
         if topic not in userpref.weaknesses:
             userpref.weaknesses.append(topic)
+            print("added weakness")
         if topic in userpref.strengths:
             userpref.strengths.remove(topic)
 
@@ -121,32 +122,22 @@ def weakrec(userid):
     return response.choices[0].message.content.strip()
 
 
-def generateddoetopic(userid):
+def ddoetopic(userid, num):
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
-    strenghts = userpref.strenghts
+    strengths = userpref.strengths
     age = userpref.age
     weaknesses= userpref.weaknesses
-    num = randrange(2)
     #0 = learn new, 1 = revise, 2 = continue off strength
-    if num==0:
+    if num==1 and strengths:
         response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
-            {"role": "user", "content": f"Recommend a random topic that a {age} year old should learn, which isnt {strenghts}, {weaknesses}"}
+            {"role": "user", "content": f"A {age} year old user is interestd in {strengths}. Recommend ONE specific academic topic related to their interests."}
         ]
         )
         return response.choices[0].message.content.strip()
-    if num==1:
-        response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
-            {"role": "user", "content": f"A {age} year old user is interestd in {strenghts}. Please recommend a topic a continuation of this or similar to this."}
-        ]
-        )
-        return response.choices[0].message.content.strip()
-    else:
+    elif num == 2 and weaknesses:
         response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -155,9 +146,40 @@ def generateddoetopic(userid):
         ]
         )
         return response.choices[0].message.content.strip()
+    else:
+        response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return A DIRECT ANSWER to what is asked."},
+            {"role": "user", "content": f"Recommend ONE SPECIFIC academic topic that a {age} year old should learn. Example topics are photosynthesis, algebra, object oriented programming"}
+        ]
+        )
+        return response.choices[0].message.content.strip()
         
 
+def ddoedescription(userid, topic):
+    userpref = UserPreferences.query.filter_by(user_id=userid).first()
+    age = userpref.age
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro or an outro, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"Give a brief description to a {age} year old about {topic}."}
+        ]
+    )
+    return response.choices[0].message.content.strip()
 
+def ddoeexamples(userid, topic):
+    userpref = UserPreferences.query.filter_by(user_id=userid).first()
+    age = userpref.age
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explination, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"Give an {age} year old some real life examples of {topic}."}
+        ]
+    )
+    return response.choices[0].message.content.strip()
 
     
 

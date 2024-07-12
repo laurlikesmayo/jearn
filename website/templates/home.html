@@ -1,22 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "index.html" %}
+
+{% block content %}
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jearn Testing</title>
+    <title>Jearn - Home</title>
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        #revealButton {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <form method = "POST">
-        <label>ChatGPT Preference</label>
-        <input name="age" type="number" placeholder="what grade are you in?">
-        <input name="prompt" type="text" placeholder="What are you interested in?">
-        <input name="language" type="text" placeholder="languyage">
-        <input type="submit">	
+    <button id="revealButton">Reveal today's topic!</button>
+    <div id="hiddenContent" class="hidden">
+        <p>{{topic}}</p>
+        <p>{{description}}</p>
+        <p>{{examples}}</p>
+    </div>
 
-    </form>
-    
-    <h1> ChatGPT Reply</h1>
-    <p> {{reply}}</p>
-
+    <script>
+        document.getElementById('revealButton').addEventListener('click', function() {
+            var hiddenContent = document.getElementById('hiddenContent');
+            if (hiddenContent.classList.contains('hidden')) {
+                hiddenContent.classList.remove('hidden');
+            } else {
+                hiddenContent.classList.add('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
+{% endblock %}

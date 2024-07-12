@@ -18,15 +18,14 @@ class Users(db.Model, UserMixin):
 
 
 class UserPreferences(db.Model, UserMixin):
-    id = db.Column("id", db.Integer, primary_key = True)
+    id = db.Column("id", db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    age = db.Column(db.Integer, default = 20)
-    language = db.Column(db.String(50), default = "English")
+    age = db.Column(db.Integer, default=20)
+    language = db.Column(db.String(50), default="English")
     subjects = db.Column(db.JSON, default=default_list)
-    strengths = db.Column(db.JSON, default=default_list)
+    strengths = db.Column(db.JSON, default=default_list)  # Correct spelling
     weaknesses = db.Column(db.JSON, default=default_list)
-    dailytopic = db.Column(db.String(50), nullable = True)
-
+    dailytopic = db.Column(db.String(50), default="NA")
 
 
 

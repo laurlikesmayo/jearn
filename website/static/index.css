@@ -1,0 +1,11 @@
+/* index.css */
+
+/* Adjust spacing of navbar items */
+.navbar-nav .nav-item {
+    margin-right: 15px; /* Adjust the value as needed for spacing */
+}
+
+/* Align Profile button to the right side of the screen */
+.navbar-nav .dropdown:last-child {
+    margin-left: auto;
+}
