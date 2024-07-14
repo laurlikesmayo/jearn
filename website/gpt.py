@@ -150,7 +150,7 @@ def ddoetopic(userid, num):
         response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return A DIRECT ANSWER to what is asked."},
+            {"role": "system", "content": "DO NOT add an intro, outro, or explanation, just return a direct one-word answer to what is asked."},
             {"role": "user", "content": f"Recommend ONE SPECIFIC academic topic that a {age} year old should learn. Example topics are photosynthesis, algebra, object oriented programming"}
         ]
         )
@@ -181,5 +181,34 @@ def ddoeexamples(userid, topic):
     )
     return response.choices[0].message.content.strip()
 
-    
+def keywords(topic):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explination, a direct answer to what is asked. "},
+            {"role": "user", "content": f"Generate a list of 3-4 keywords related to {topic}. After each keyword listed, add the word SPLIT. Do not include any punctuation."}
+        ])
+    keywords = response.choices[0].message.content.strip()
+    keywords = keywords.split('SPLIT')
+    return keywords
 
+def summary(articletext):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro, outro, or explination, just return a direct answer to what is asked."},
+            {"role": "user", "content": f"Give a 50-word summary of this article: {articletext}."}
+        ]
+    )
+    return response.choices[0].message.content.strip()
+
+def ddoearticle(topic, age):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "Please don't add an intro or an outro. Just return a direct answer to what is asked."},
+            {"role": "user", "content": f"Generate an article for a {age} year old about {topic}"}
+        ]
+    )
+    return response.choices[0].message.content
+    

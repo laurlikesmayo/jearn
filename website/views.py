@@ -2,8 +2,9 @@ from flask import Flask, Blueprint, render_template, request, url_for, redirect,
 from datetime import timedelta
 from werkzeug.security import generate_password_hash, check_password_hash 
 from .models import Users, UserPreferences
+import random
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
-from . import gpt
+from . import gpt, ddoecontent
 import json
 
 from . import app, db
@@ -178,7 +179,40 @@ def home():
             
     return render_template('home.html', topic=topic, description = description, examples=examples)
 
-        
+@login_required
+@views.route("/logout")
+def logout():
+    logout_user()
+    session.clear()
+    flash("Logged out successfully!")
+    return redirect(url_for('views.login'))
+
+@login_required
+@views.route("/articles")
+def articles():
+    #the articles which are shown change everytime this page is reloaded
+    article_list = []
+    news_list = []
+    blog_list = [] 
+    topic = session.get('ddoetopic')
+    news_titles, news_urls = ddoecontent.fetch_news_articles(topic, 10)
+    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic, 10)
+    for i in range(len(news_titles)):
+        news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
+        news_list.append([news_titles[i], news_urls[i], news_text, news_media])
+        article_list.append([news_titles[i], news_urls[i], news_text, news_media])
+    for i in range(len(blog_titles)):
+        blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
+        blog_list.append([blog_titles[i], blog_urls[i], blog_text, blog_media])
+        article_list.append([blog_titles[i], blog_urls[i], blog_text, blog_media])
+    
+    #MIGHT CHANGE IN THE FUTURE
+    random.shuffle(article_list)
+
+    # show articles as a popup.
+    return render_template('articles.html', articles = article_list, news=news_list, blogs = blog_list)
+
+
         
 
 
@@ -192,11 +226,6 @@ def navbar():
     return render_template('index.html')
 
 @login_required
-@views.route("/articles")
-def articles():
-    return render_template('index.html')
-
-@login_required
 @views.route("/reels")
 def reels():
     return render_template('index.html')
@@ -204,11 +233,6 @@ def reels():
 @login_required
 @views.route("/account")
 def account():
-    return render_template('index.html')
-
-@login_required
-@views.route("/logout")
-def logout():
     return render_template('index.html')
 
 
