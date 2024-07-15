@@ -86,19 +86,19 @@ def scrape_articles(url): #all_titles[i], all_sources[i], all_urls[i]
     
     return article_text, article_media
 
-topics = ['AI']
-titles, sources, urls= fetch_news_articles(topics)
+# topics = ['AI']
+# titles, sources, urls= fetch_news_articles(topics)
 
-#print(scrape_articles('https://en.wikipedia.org/wiki/Natalia_Grossman'))
+# print(scrape_articles('https://en.wikipedia.org/wiki/Natalia_Grossman'))
 
-#testing
+# testing
 
-for i in range(len(titles)):
-    print(len(titles))
-    print(f"Article {i + 1}:")
-    print(f"Title: {titles[i]}")
-    print(f"Source: {sources[i]}")
-    print(f"URL: {urls[i]}")
-    print("-" * 50)
+# for i in range(len(titles)):
+#     print(len(titles))
+#     print(f"Article {i + 1}:")
+#     print(f"Title: {titles[i]}")
+#     print(f"Source: {sources[i]}")
+#     print(f"URL: {urls[i]}")
+#     print("-" * 50)
 
-    print(scrape_articles(urls[i]))
+#     print(scrape_articles(urls[i]))
