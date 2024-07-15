@@ -23,7 +23,7 @@ def upgrade():
     #     batch_op.add_column(sa.Column('dailytopic', sa.String(length=50), nullable=True))
 
     # # ### end Alembic commands ###
-    pass;
+    pass
 
 
 def downgrade():
@@ -33,4 +33,4 @@ def downgrade():
     #     batch_op.drop_column('language')
 
     # ### end Alembic commands ###
-    pass;
+    pass

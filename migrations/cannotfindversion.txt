@@ -1,0 +1,5 @@
+flask  db revision --rev-id 093045547e2f
+Requested revision 093045547e2f overlaps with other requested revisions 663b6deef516
+flask db downgrade
+flask db upgrade
+flask db upgrade
