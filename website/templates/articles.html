@@ -7,31 +7,35 @@
 </head>
 <body>
 <!-- CHANGE THIS THIS IS FROM CHATGPT -->
+<!--articles = article_list, news=news_list, blogs = blog_list-->
+<p> hello </p>
+<p> {{articles|length}}</p>
 <div class="container mt-5">
     <div class="row">
-        {% for post in posts %}
+        {% for article in articles %}
         <div class="col-md-4 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">{{ post.title }}</h5>
-                    <p class="card-text">{{ post.content }}</p>
-                    <a href="#" class="btn btn-primary view-post" data-toggle="modal" data-target="#postModal{{ post.id }}">View Post</a>
+                    <h5 class="card-title">{{ article['title'] }}</h5>
+                    <p class="card-text">{{ article['summary'] }}</p>
+                    <a href="#" class="btn btn-primary view-post" data-toggle="modal">View Post</a>
                 </div>
             </div>
         </div>
 
         <!-- Modal for each post -->
-        <div class="modal fade" id="postModal{{ post.id }}" tabindex="-1" role="dialog" aria-labelledby="postModalLabel{{ post.id }}" aria-hidden="true">
+        <div class="modal fade" id="postModal{{ post.id }}" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="postModalLabel{{ post.id }}">{{ post.title }}</h5>
+                        <h5 class="modal-title" >{{ article['title'] }}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
+                    {{article['media'][0]}}
                     <div class="modal-body">
-                        <p>{{ post.content }}</p>
+                        <p>{{ article['text'] }}</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -50,7 +54,5 @@
 
 </body>
 </html>
-
-
 
 {% endblock %}

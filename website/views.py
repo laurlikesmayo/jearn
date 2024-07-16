@@ -199,16 +199,21 @@ def articles():
     blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic, 10)
     for i in range(len(news_titles)):
         news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-        news_list.append([news_titles[i], news_urls[i], news_text, news_media])
-        article_list.append([news_titles[i], news_urls[i], news_text, news_media])
+        if news_text:
+            summary = gpt.summary(news_text[:500])
+        print(summary)
+        news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
+        article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
     for i in range(len(blog_titles)):
         blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-        blog_list.append([blog_titles[i], blog_urls[i], blog_text, blog_media])
-        article_list.append([blog_titles[i], blog_urls[i], blog_text, blog_media])
+        if blog_text:
+            summary = gpt.summary(blog_text[:500])
+        blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
+        article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
     
     #MIGHT CHANGE IN THE FUTURE
     random.shuffle(article_list)
-
+    print(len(article_list))
     # show articles as a popup.
     return render_template('articles.html', articles = article_list, news=news_list, blogs = blog_list)
 

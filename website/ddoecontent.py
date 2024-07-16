@@ -14,6 +14,8 @@ tiktok_secret = os.getenv('client_secret')
 
 
 def fetch_news_articles(query, page_size=25):
+    if isinstance(query, list):
+        query = ' '.join(query)
     api_key = news_api
     url = f'https://newsapi.org/v2/everything?q={query}&pageSize={page_size}&apiKey={api_key}'
     response = requests.get(url)
@@ -23,6 +25,8 @@ def fetch_news_articles(query, page_size=25):
     return all_titles, all_urls
 
 def fetch_blog_articles(query, page_size=25):
+    if isinstance(query, list):
+        query = ' '.join(query)
     api_key = google_api
     cse_id = google_cse
     url = f'https://www.googleapis.com/customsearch/v1?q={query}&cx={cse_id}&key={api_key}&num={page_size}'
@@ -35,8 +39,8 @@ def fetch_blog_articles(query, page_size=25):
 def fetch_tiktok(query, page_size=25):
     client_id = tiktok_id
     client_secret = tiktok_secret
-
-
+    if isinstance(query, list):
+        query = ' '.join(query)
     # Step 1: Get access token using OAuth 2.0
     auth_url = 'https://openapi.tiktok.com/oauth/access_token'
     auth_data = {
@@ -63,33 +67,45 @@ def fetch_tiktok(query, page_size=25):
     all_titles = [video['desc'] for video in videos.get('items', [])]
     return all_titles, all_urls
     
-def scrape_articles(url): #all_titles[i], all_sources[i], all_urls[i]
+def scrape_articles(url):
     response = requests.get(url)
     if response.status_code != 200:
-        print('failed to retrieve page')
-        return ""
+        print(f'Failed to retrieve page: {response.status_code}')
+        return "", []  # Ensure it returns an empty string and an empty list
+
     soup = BeautifulSoup(response.content, 'html.parser')
     article_text = ''
     article_media = []
+
+    # Extract text content
     for tag in ['article', 'div', 'main']:
         content = soup.find_all(tag)
         for section in content:
             paragraphs = section.find_all('p')
             if paragraphs:
                 article_text += ' '.join([para.get_text() for para in paragraphs])
-    for tag in ['video', 'img', 'iframe', 'embed', 'audio', 'picture']:
-        content = soup.find_all(tag)
-        for media in content:
-            article_media.append(media)
 
+    # Extract media content
+    media_tags = ['video', 'img', 'iframe', 'embed', 'audio', 'source']
+    for tag in media_tags:
+        for media in soup.find_all(tag):
+            src = media.get('src')
+            if src:
+                article_media.append(src)
+            # Check for nested sources in picture tags
+            if tag == 'picture':
+                sources = media.find_all('source')
+                for source in sources:
+                    src = source.get('src')
+                    if src:
+                        article_media.append(src)
 
-    
     return article_text, article_media
 
 # topics = ['AI']
 # titles, sources, urls= fetch_news_articles(topics)
 
-# print(scrape_articles('https://en.wikipedia.org/wiki/Natalia_Grossman'))
+#print(scrape_articles('https://en.wikipedia.org/wiki/Natalia_Grossman'))
 
 # testing
 
@@ -102,3 +118,8 @@ def scrape_articles(url): #all_titles[i], all_sources[i], all_urls[i]
 #     print("-" * 50)
 
 #     print(scrape_articles(urls[i]))
+
+# news, urls = fetch_news_articles('coding', 10)
+# print(scrape_articles(urls[0]))
+
+#print(fetch_blog_articles('coding', 10))
