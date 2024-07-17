@@ -3,13 +3,8 @@
 <head>
     <title>Jearn - Articles</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
 </head>
 <body>
-<!-- CHANGE THIS THIS IS FROM CHATGPT -->
-<!--articles = article_list, news=news_list, blogs = blog_list-->
-<p> hello </p>
-<p> {{articles|length}}</p>
 <div class="container mt-5">
     <div class="row">
         {% for article in articles %}
@@ -17,25 +12,37 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">{{ article['title'] }}</h5>
-                    <p class="card-text">{{ article['summary'] }}</p>
-                    <a href="#" class="btn btn-primary view-post" data-toggle="modal">View Post</a>
+                    {% set summary = article['text'].split()[:25]%}
+                    <p class="card-text">{{summary | join(' ')}}...</p>
+                    <a href="#" class="btn btn-primary view-post" data-toggle="modal" data-target="#postModal{{ loop.index }}">View Post</a>
                 </div>
             </div>
         </div>
 
         <!-- Modal for each post -->
-        <div class="modal fade" id="postModal{{ post.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal fade" id="postModal{{ loop.index }}" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" >{{ article['title'] }}</h5>
+                        <h5 class="modal-title">{{ article['title'] }}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    {{article['media'][0]}}
                     <div class="modal-body">
+                        {% if article['media'] %}
+                        <div class="media">
+                            <img src="{{ article['media'][0]['src'] }}" class="mr-3" alt="{{ article['media'][0]['alt'] }}">
+                        </div>
+                        {% endif %}
+                        {% if article['url'] %}
+                        <p>{{ article['text'][:5000] }}...</p>
+                        <p>To read more, visit:</p>
+                        <a href="{{article['url']}}">{{article['url']}}</a>
+                        {% else %}
                         <p>{{ article['text'] }}</p>
+                        {% endif %}
+                        
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -54,5 +61,4 @@
 
 </body>
 </html>
-
 {% endblock %}

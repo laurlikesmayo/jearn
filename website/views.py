@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint, render_template, request, url_for, redirect, session, flash, jsonify
-from datetime import timedelta
+from datetime import timedelta, datetime
 from werkzeug.security import generate_password_hash, check_password_hash 
-from .models import Users, UserPreferences
+from .models import Users, UserPreferences, DDOE
 import random
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
 from . import gpt, ddoecontent
@@ -9,6 +9,12 @@ import json
 
 from . import app, db
 views = Blueprint("views", __name__)
+
+@app.before_request
+def before_request_func():
+    if not current_user:
+        return redirect(url_for('views.login'))
+
 @views.route('/login',  methods=['GET', 'POST'] )
 def login():
     if request.method == "POST":
@@ -20,9 +26,6 @@ def login():
             if check_password_hash(user.password, password):
                 login_user(user, remember=permanentsesh)
                 print('Logged in')
-                session.permanet = permanentsesh
-                session['loggedin'] = True
-                session['email'] = user.email
                 flash('Log in sucessful', 'info ')
                 return redirect(url_for('views.home')) 
             else:
@@ -57,7 +60,6 @@ def register():
                 db.session.add(new_user)
                 db.session.commit()
                 login_user(new_user)
-                session['loggedin'] = True
                 flash('Sign up successful', 'info')
                 return redirect(url_for('views.personalize'))
 
@@ -163,22 +165,29 @@ def checksandw():
     return render_template("checksandw.html", strengths=userpref.strengths, weaknesses=userpref.weaknesses)
     
 @login_required
-@views.route("/home", methods = ["GET", "POST"])
+@views.route("/", methods=["GET", "POST"])
 def home():
-    if 'ddoetopic' not in session:
-        topic = gpt.ddoetopic(current_user.id, 0)
-        description = gpt.ddoedescription(current_user.id, topic)
-        examples = gpt.ddoeexamples(current_user.id, topic)
-        session['ddoetopic'] = topic #SET TIMING LATER
-        session['description'] = description
-        session['examples'] = examples
-    else:
-        topic = session.get('ddoetopic')
-        examples = session.get('examples')
-        description = session.get('description')
-            
-    return render_template('home.html', topic=topic, description = description, examples=examples)
+    today = datetime.now().date()
+    ddoe = DDOE.query.filter_by(user_id=current_user.id).first()
+    
+    if not ddoe:
+        ddoe = DDOE(user_id=current_user.id, last_updated=today)
+        db.session.add(ddoe)
+        db.session.commit()
 
+    if ddoe.last_updated.date() == today:
+        ddoe.last_updated = datetime.now()
+        db.session.commit()
+    else:
+        ddoe.topic = gpt.ddoetopic(current_user.id, 0)
+        ddoe.description = gpt.ddoedescription(current_user.id, ddoe.topic)
+        ddoe.examples = gpt.ddoeexamples(current_user.id, ddoe.topic)
+        db.session.commit()
+    session['ddoetopic'] = ddoe.topic
+    session['description'] = ddoe.description
+    session['examples'] = ddoe.examples
+    return render_template('home.html', topic=ddoe.topic, description=ddoe.description, examples=ddoe.examples)
+    
 @login_required
 @views.route("/logout")
 def logout():
@@ -190,30 +199,41 @@ def logout():
 @login_required
 @views.route("/articles")
 def articles():
+    if 'ddoetopic' not in session:
+        return redirect(url_for('views.home'))
+    userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
     #the articles which are shown change everytime this page is reloaded
     article_list = []
     news_list = []
+    ai_article_titles=['poop'] #To make sure chatgpt doesnt write repetitive articles.
     blog_list = [] 
     topic = session.get('ddoetopic')
-    news_titles, news_urls = ddoecontent.fetch_news_articles(topic, 10)
-    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic, 10)
-    for i in range(len(news_titles)):
+    topic_keywords = gpt.keywords(topic) 
+    print(topic_keywords)   
+    news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
+    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 10)
+    for i in range(0, 10):
+        ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
+        try:
+            if ai_article[1] is None or len(ai_article[1]) < 25:
+                continue
+            else:
+                ai_article_titles.append(ai_article[0])
+                article_list.append({'title': ai_article[0], 'text': ai_article[1]})
+        except:
+            continue
+        
+    for i in range(len(news_titles)): #Adding News Articles to 'article_list'
         news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-        if news_text:
-            summary = gpt.summary(news_text[:500])
-        print(summary)
-        news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
-        article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
-    for i in range(len(blog_titles)):
+        news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
+        article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
+    for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
         blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-        if blog_text:
-            summary = gpt.summary(blog_text[:500])
-        blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
-        article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
+        blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
+        article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
     
     #MIGHT CHANGE IN THE FUTURE
     random.shuffle(article_list)
-    print(len(article_list))
     # show articles as a popup.
     return render_template('articles.html', articles = article_list, news=news_list, blogs = blog_list)
 
@@ -233,12 +253,58 @@ def navbar():
 @login_required
 @views.route("/reels")
 def reels():
+    if 'ddoetopic' not in session:
+        return redirect(url_for('views.home'))
     return render_template('index.html')
 
 @login_required
 @views.route("/account")
 def account():
     return render_template('index.html')
+
+#OLD ARTICLES WITH AI-GENERATED SUMMARY
+# @login_required
+# @views.route("/articles")
+# def articles():
+#     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
+#     #the articles which are shown change everytime this page is reloaded
+#     article_list = []
+#     news_list = []
+#     ai_article_titles=['poop'] #To make sure chatgpt doesnt write repetitive articles.
+#     blog_list = [] 
+#     topic = session.get('ddoetopic')
+#     topic_keywords = gpt.keywords(topic) 
+#     print(topic_keywords)   
+#     news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
+#     blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 10)
+#     for i in range(0, 10):
+#         ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
+#         try:
+#             summary = gpt.summary(ai_article[1])
+#         except:
+#             continue
+#         ai_article_titles.append(ai_article[0])
+#         article_list.append({'title': ai_article[0], 'text': ai_article[1], 'summary': summary})
+#     for i in range(len(news_titles)): #Adding News Articles to 'article_list'
+#         news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
+#         if news_text:
+#             summary = gpt.summary(news_text[:500])
+#         news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
+#         article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
+#     for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
+#         blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
+#         if blog_text:
+#             summary = gpt.summary(blog_text[:500])
+#         blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
+#         article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
+    
+#     #MIGHT CHANGE IN THE FUTURE
+#     random.shuffle(article_list)
+#     print(len(article_list))
+#     # show articles as a popup.
+#     return render_template('articles.html', articles = article_list, news=news_list, blogs = blog_list)
+
+
 
 
 

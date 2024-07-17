@@ -186,7 +186,9 @@ def keywords(topic):
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Please don't add an intro, outro, or explination, a direct answer to what is asked. "},
-            {"role": "user", "content": f"Generate a list of 3-4 keywords related to {topic}. After each keyword listed, add the word SPLIT. Do not include any punctuation."}
+            {"role": "system", "content": "Do not add any punctuation, (eg '.', ',') or numbering (eg 1. 2.). Return all values on the same line"},
+
+            {"role": "user", "content": f"Generate a list of 3-4 keywords related to {topic}. After each keyword listed, add the word SPLIT"}
         ])
     keywords = response.choices[0].message.content.strip()
     keywords = keywords.split('SPLIT')
@@ -197,18 +199,27 @@ def summary(articletext):
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Please don't add an intro, outro, or explination, just return a direct answer to what is asked."},
-            {"role": "user", "content": f"Give a 50-word summary of this article: {articletext}."}
+            {"role": "user", "content": f"Give a 25-word summary of this article: {articletext}."}
         ]
     )
     return response.choices[0].message.content.strip()
 
-def ddoearticle(topic, age):
+def ddoearticle(topic, age, previous_article_titles):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Please don't add an intro or an outro. Just return a direct answer to what is asked."},
-            {"role": "user", "content": f"Generate an article for a {age} year old about {topic}"}
+            {"role": "system", "content": f"You are an expert at the topic {topic}. You are writing a super interesting blog article about your SPECIFIC EXPERIENCES/EXAMPLES with the topic {topic}"},
+            {"role": "system", "content": f"Write the article on a very nieche area of the topic {topic}, but make sure it is NOT ABOUT about {previous_article_titles}."},
+            {"role": "user", "content": f"Generate this article for a {age} year old. After the title, put the word 'SPLITHERE'."}
         ]
     )
-    return response.choices[0].message.content
+    response = response.choices[0].message.content.split("SPLITHERE")
+    try:
+        title = response[0].split('Title: ')
+        response[0] = "".join(title[1])
+        response[0] = response[0].split('**')[0]
+    except:
+        pass
+    return response
+
     

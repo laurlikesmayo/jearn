@@ -13,27 +13,41 @@ tiktok_id = os.getenv('client_key')
 tiktok_secret = os.getenv('client_secret')
 
 
-def fetch_news_articles(query, page_size=25):
+def fetch_news_articles(query, page_size=25, exclude_domains=['removed.com', 'plos.org']):
     if isinstance(query, list):
         query = ' '.join(query)
-    api_key = news_api
+    api_key = 'your_news_api_key'  # Replace with your News API key
     url = f'https://newsapi.org/v2/everything?q={query}&pageSize={page_size}&apiKey={api_key}'
     response = requests.get(url)
-    articles = response.json()
-    all_titles = [article['title'] for article in articles.get('articles', [])]
-    all_urls = [article['url'] for article in articles.get('articles', [])]
+    articles = response.json().get('articles', [])
+
+    filtered_articles = [(article['title'], article['url']) for article in articles
+                         if not any(domain in article['url'] for domain in exclude_domains)]
+
+    if not filtered_articles:
+        return [], []  # Return empty lists if no articles match the criteria
+
+    all_titles, all_urls = zip(*filtered_articles)  # Unzip titles and URLs from filtered articles
+
     return all_titles, all_urls
 
-def fetch_blog_articles(query, page_size=25):
+def fetch_blog_articles(query, page_size=25, exclude_domains=['removed.com', 'plos.org']):
     if isinstance(query, list):
         query = ' '.join(query)
-    api_key = google_api
-    cse_id = google_cse
+    api_key = 'your_google_api_key'  # Replace with your Google API key
+    cse_id = 'your_google_cse_id'  # Replace with your Google CSE ID
     url = f'https://www.googleapis.com/customsearch/v1?q={query}&cx={cse_id}&key={api_key}&num={page_size}'
     response = requests.get(url)
-    search_results = response.json()
-    all_urls = [article['link'] for article in search_results.get('items', [])]
-    all_titles = [article['title'] for article in search_results.get('items', [])]
+    search_results = response.json().get('items', [])
+
+    filtered_articles = [(article['title'], article['link']) for article in search_results
+                         if not any(domain in article['link'] for domain in exclude_domains)]
+
+    if not filtered_articles:
+        return [], []  # Return empty lists if no articles match the criteria
+
+    all_titles, all_urls = zip(*filtered_articles)  # Unzip titles and URLs from filtered articles
+
     return all_titles, all_urls
 
 def fetch_tiktok(query, page_size=25):
