@@ -2,6 +2,7 @@ from flask import Flask, Blueprint, render_template, request, url_for, redirect,
 from datetime import timedelta, datetime
 from werkzeug.security import generate_password_hash, check_password_hash 
 from .models import Users, UserPreferences, DDOE
+from sqlalchemy.orm.attributes import flag_modified
 import random
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
 from . import gpt, ddoecontent
@@ -114,11 +115,10 @@ def dangerous():
 @login_required
 def create_test():
     if(request.method == "POST"):
-        userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-        topic = request.form.get("topic")
-        session['testtopic'] = topic
+        prompt = request.form.get("prompt")
+        session['testprompt'] = prompt
         formats = request.form.get("format")
-        return redirect(url_for("views.test", age=userpref.age, prompt=topic, formats=formats))
+        return redirect(url_for("views.test", prompt=prompt, formats=formats))
     return render_template("create_test.html")
 
 @login_required
@@ -131,8 +131,9 @@ def test():
             userans.append(answer)
         session['userans'] = userans
         return redirect(url_for("views.checktest"))
-    else:
-        age = request.args.get('age')
+    else:          
+        userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
+        age = userpref.age
         prompt = request.args.get('prompt')
         formats = request.args.get('formats')
 
@@ -142,6 +143,7 @@ def test():
         session['gptans'] = gptans
         session['format'] = formats
         session['questions'] = questions
+        session['testtopic'] = prompt
         return render_template('test.html', questions=questions, choices = choices, formats = formats)
 
 @login_required
@@ -160,10 +162,17 @@ def checktest():
 @views.route("/checksandw", methods=['GET', 'POST'])
 def checksandw():
     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-    userpref.strengths.append("mathematics")  # Correct spelling
-    db.session.commit()  # Don't forget to commit the change to the database
-    return render_template("checksandw.html", strengths=userpref.strengths, weaknesses=userpref.weaknesses)
+    current_strengths = userpref.strengths or []
+    new_strength = 'math'
+    if new_strength not in current_strengths:
+        current_strengths.append(new_strength)
+
+                # Update the user preferences with the new strengths
+        userpref.strengths = current_strengths
+        db.session.commit()
+        print("stregnth added successfully")
     
+    return render_template("checksandw.html", strengths=userpref.strengths, weaknesses=userpref.weaknesses)
 @login_required
 @views.route("/", methods=["GET", "POST"])
 def home():
@@ -179,10 +188,13 @@ def home():
         ddoe.last_updated = datetime.now()
         db.session.commit()
     else:
-        ddoe.topic = gpt.ddoetopic(current_user.id, 0)
+        num = random.randint(0, 3)
+        ddoe.topic = gpt.ddoetopic(current_user.id, num)
         ddoe.description = gpt.ddoedescription(current_user.id, ddoe.topic)
         ddoe.examples = gpt.ddoeexamples(current_user.id, ddoe.topic)
+        ddoe.last_updated = today
         db.session.commit()
+
     session['ddoetopic'] = ddoe.topic
     session['description'] = ddoe.description
     session['examples'] = ddoe.examples
@@ -197,17 +209,33 @@ def logout():
     return redirect(url_for('views.login'))
 
 @login_required
-@views.route("/articles")
+@views.route("/articles", methods = ['GET', 'POST'])
 def articles():
-    if 'ddoetopic' not in session:
+    if request.method == 'POST':
+        topic = request.form.get('topic')
+        article_list = session.get('article_list', [])
+        articles, news, blog = find_articles(topic)
+        for i in articles:
+            article_list.append(i)
+        session['article_list'] = article_list
+    elif 'ddoetopic' in session:
+        topic = session.get('ddoetopic') 
+        article_list, news_list, blog_list = find_articles(topic)
+        session['article_list'] = article_list
+    else:
         return redirect(url_for('views.home'))
+
+    return render_template('articles.html', articles = article_list, topic=topic)
+    # news=news_list, blogs = blog_list,
+
+
+def find_articles(topic):
     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
     #the articles which are shown change everytime this page is reloaded
     article_list = []
     news_list = []
     ai_article_titles=['poop'] #To make sure chatgpt doesnt write repetitive articles.
     blog_list = [] 
-    topic = session.get('ddoetopic')
     topic_keywords = gpt.keywords(topic) 
     print(topic_keywords)   
     news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
@@ -234,11 +262,10 @@ def articles():
     
     #MIGHT CHANGE IN THE FUTURE
     random.shuffle(article_list)
-    # show articles as a popup.
-    return render_template('articles.html', articles = article_list, news=news_list, blogs = blog_list)
+
+    return article_list, news_list, blog_list
 
 
-        
 
 
 

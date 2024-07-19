@@ -53,11 +53,33 @@
         {% endfor %}
     </div>
 </div>
+<!-- action="{{url_for('views.articles')}}" -->
+<form method="POST" id="topicForm" action="{{url_for('views.articles')}}" >
+    <p>Would you like to continue learning about {{topic}}?</p>
+    <div>
+        <input type="hidden" name="topic" value="{{topic}}">
+        <button type="submit">Continue learning about {{topic}}</button>
+    </div>
+    <div>
+        <label for="topic">Enter custom topic</label>
+        <input id="topic" name="topic" type="text" placeholder="Enter a topic">
+        <button type = "submit">Submit</button>
+    </div>
+</form>
+
 
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    function submitFormCurrentTopic() {
+        // Set the topic value to 'hello'
+        document.getElementById('topic').value = '{{topic}}';
+        // Submit the form
+        document.getElementById('topicForm').submit();
+    }
+</script>
 
 </body>
 </html>

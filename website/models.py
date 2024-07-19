@@ -24,9 +24,9 @@ class UserPreferences(db.Model, UserMixin):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     age = db.Column(db.Integer, default=20)
     language = db.Column(db.String(50), default="English")
-    subjects = db.Column(db.JSON, default=default_list)
-    strengths = db.Column(db.JSON, default=default_list)  # Correct spelling
-    weaknesses = db.Column(db.JSON, default=default_list)
+    subjects = db.Column(db.JSON, default=[])
+    strengths = db.Column(db.JSON, default=[])  # Correct spelling
+    weaknesses = db.Column(db.JSON, default=[])
 
 
 class DDOE(db.Model, UserMixin):

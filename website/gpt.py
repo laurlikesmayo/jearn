@@ -84,18 +84,20 @@ def testsandw(correctans, userid, topic):
     score = sum(int(ans[0]) for ans in correctans) / len(correctans)
     print(score)
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
-
+    strengths = userpref.strengthsq
+    weaknesses = userpref.weaknesses
     if score > 0.7:
-        if topic not in userpref.strengths:
-            userpref.strengths.append(topic)
-        if topic in userpref.weaknesses:
-            userpref.weaknesses.remove(topic)
+        if topic not in strengths:
+            strengths.append(topic)
+        if topic in weaknesses:
+            weaknesses.remove(topic)
     else:
-        if topic not in userpref.weaknesses:
-            userpref.weaknesses.append(topic)
-            print("added weakness")
-        if topic in userpref.strengths:
-            userpref.strengths.remove(topic)
+        if topic not in weaknesses:
+            weaknesses.append(topic)
+        if topic in strengths:
+            strengths.remove(topic)
+    userpref.strengths = strengths
+    userpref.weaknesses = weaknesses
 
     db.session.commit()
 

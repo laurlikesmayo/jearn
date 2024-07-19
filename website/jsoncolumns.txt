@@ -1,0 +1,2 @@
+you cant add it straight away into the json column
+you have to replicate the json column into a list, add into the list, then set the json column to the list
