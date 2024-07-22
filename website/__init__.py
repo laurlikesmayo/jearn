@@ -29,7 +29,7 @@ migrate = Migrate(app, db, render_as_batch=True)
 
 # Setup login manager
 login_manager = LoginManager()
-login_manager.login_view = '/login'  # The view to redirect to when the user needs to log in
+login_manager.login_view = 'login'  # The view to redirect to when the user needs to log in
 login_manager.init_app(app)
 
 # Import and register blueprints

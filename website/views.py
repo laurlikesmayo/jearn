@@ -180,7 +180,10 @@ def home():
     ddoe = DDOE.query.filter_by(user_id=current_user.id).first()
     
     if not ddoe:
-        ddoe = DDOE(user_id=current_user.id, last_updated=today)
+        topic = gpt.ddoetopic(current_user.id, 0)
+        description = gpt.ddoedescription(current_user.id, topic)
+        examples = gpt.ddoeexamples(current_user.id, topic)
+        ddoe = DDOE(user_id=current_user.id, topic = topic, description = description, examples = examples, last_updated=today)
         db.session.add(ddoe)
         db.session.commit()
 
@@ -206,6 +209,7 @@ def logout():
     logout_user()
     session.clear()
     flash("Logged out successfully!")
+    print('loggedout')
     return redirect(url_for('views.login'))
 
 @login_required
@@ -227,7 +231,10 @@ def articles():
 
     return render_template('articles.html', articles = article_list, topic=topic)
     # news=news_list, blogs = blog_list,
-
+@login_required
+@views.route('/random')
+def randomx():
+    return render_template('random.html', currentuser = current_user.id)
 
 def find_articles(topic):
     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()

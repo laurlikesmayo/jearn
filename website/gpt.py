@@ -212,16 +212,26 @@ def ddoearticle(topic, age, previous_article_titles):
         messages=[
             {"role": "system", "content": f"You are an expert at the topic {topic}. You are writing a super interesting blog article about your SPECIFIC EXPERIENCES/EXAMPLES with the topic {topic}"},
             {"role": "system", "content": f"Write the article on a very nieche area of the topic {topic}, but make sure it is NOT ABOUT about {previous_article_titles}."},
-            {"role": "user", "content": f"Generate this article for a {age} year old. After the title, put the word 'SPLITHERE'."}
+            {"role": "user", "content": f"Generate this article for a {age} year old. After the title, put the word 'SPLITHERE'. Do NOT include any words in bold (or asteriods **)"}
         ]
     )
     response = response.choices[0].message.content.split("SPLITHERE")
     try:
         title = response[0].split('Title: ')
         response[0] = "".join(title[1])
-        response[0] = response[0].split('**')[0]
+
     except:
         pass
     return response
 
+def generate_image(prompt, n=1, size="320x180"):
+    # Request image generation from DALL-E
+    response = openai.Image.create(
+        prompt=prompt,
+        n=n,
+        size=size
+    )
+    # Extract image URL from the response
+    image_url = response['data'][0]['url']
+    return image_url
     
