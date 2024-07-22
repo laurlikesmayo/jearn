@@ -258,15 +258,21 @@ def find_articles(topic):
         except:
             continue
         
-    for i in range(len(news_titles)): #Adding News Articles to 'article_list'
-        news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-        news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-        article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-    for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
-        blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-        blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-        article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-    
+    try:
+        for i in range(len(news_titles)): #Adding News Articles to 'article_list'
+            news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
+            news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
+            article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
+    except:
+        pass
+    try:
+        for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
+            blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
+            blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
+            article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
+    except:
+        pass
+        
     #MIGHT CHANGE IN THE FUTURE
     random.shuffle(article_list)
 
