@@ -1,5 +1,7 @@
 {% extends 'index.html' %}
 {% block content %}
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Jearn - Articles</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -12,9 +14,9 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">{{ article['title'] }}</h5>
-                    {% set summary = article['text'].split()[:25]%}
-                    <p class="card-text">{{summary | join(' ')}}...</p>
-                    <a href="#" class="btn btn-primary view-post" data-toggle="modal" data-target="#postModal{{ loop.index }}">View Post</a>
+                    {% set summary = article['text'].split()[:25] %}
+                    <p class="card-text">{{ summary | join(' ') }}...</p>
+                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#postModal{{ loop.index }}">View Post</a>
                 </div>
             </div>
         </div>
@@ -35,14 +37,15 @@
                             <img src="{{ article['media'][0]['src'] }}" class="mr-3" alt="{{ article['media'][0]['alt'] }}">
                         </div>
                         {% endif %}
+                        
                         {% if article['url'] %}
-                        <p>{{ article['text'][:5000] }}...</p>
-                        <p>To read more, visit:</p>
-                        <a href="{{article['url']}}">{{article['url']}}</a>
+                        <!-- Embed the URL in an iframe if it exists -->
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe class="embed-responsive-item" src="{{ article['url'] }}" allowfullscreen></iframe>
+                        </div>
                         {% else %}
                         <p>{{ article['text'] }}</p>
                         {% endif %}
-                        
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -53,33 +56,32 @@
         {% endfor %}
     </div>
 </div>
-<!-- action="{{url_for('views.articles')}}" -->
-<form method="POST" id="topicForm" action="{{url_for('views.articles')}}" >
-    <p>Would you like to continue learning about {{topic}}?</p>
-    <div>
-        <input type="hidden" name="topic" value="{{topic}}">
-        <button type="submit">Continue learning about {{topic}}</button>
-    </div>
-    <div>
-        <label for="topic">Enter custom topic</label>
-        <input id="topic" name="topic" type="text" placeholder="Enter a topic">
-        <button type = "submit">Submit</button>
-    </div>
+
+<!-- Form for selecting or entering a topic -->
+<form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
+    <p>Would you like to continue learning about {{ topic }}?</p>
+    <input type="hidden" name="topic" value="{{ topic }}">
+    <button type="submit">Continue learning about {{ topic }}</button>
 </form>
+
+<form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
+    <input type="hidden" name="topic" value="reccomend">
+    <button type="submit">Recommend a topic!</button>
+</form>
+
+<!-- Form for submitting a custom topic -->
+<form method="POST" id="topicForm" action="{{ url_for('views.articles') }}">
+    <label for="topic">Enter custom topic</label>
+    <input id="topic" name="topic" type="text" placeholder="Enter a topic">
+    <button type="submit">Submit</button>
+</form>
+
 
 
 <!-- Bootstrap JS and dependencies -->
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script>
-    function submitFormCurrentTopic() {
-        // Set the topic value to 'hello'
-        document.getElementById('topic').value = '{{topic}}';
-        // Submit the form
-        document.getElementById('topicForm').submit();
-    }
-</script>
 
 </body>
 </html>

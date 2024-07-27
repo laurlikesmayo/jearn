@@ -1,5 +1,6 @@
 import openai
-from .models import Users, UserPreferences
+from .models import Users, UserPreferences, DDOE
+
 from . import app, db
 from random import randrange
 from dotenv import load_dotenv
@@ -126,16 +127,21 @@ def weakrec(userid):
 
 def ddoetopic(userid, num):
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
+    previous_topics = []
+    ddoe = DDOE.query.filter_by(user_id=userid).first()
+    if ddoe:
+        previous_topics = ddoe.previous_topics
     strengths = userpref.strengths
     age = userpref.age
+    
     weaknesses= userpref.weaknesses
     #0 = learn new, 1 = revise, 2 = continue off strength
     if num==1 and strengths:
         response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
-            {"role": "user", "content": f"A {age} year old user is interestd in {strengths}. Recommend ONE specific academic topic related to their interests."}
+            {"role": "system", "content": "You are a bot which only returns direct, short answers to what is asked."},
+            {"role": "user", "content": f"A {age} year old user is interested in {strengths}. Return one specific and niche topic that they should learn."}
         ]
         )
         return response.choices[0].message.content.strip()
@@ -143,7 +149,7 @@ def ddoetopic(userid, num):
         response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "Please don't add an intro, outro, or explanation, just return a direct answer to what is asked."},
+            {"role": "system", "content": "You are a bot which only returns direct, short answers to what is asked.."},
             {"role": "user", "content": f"pick a random topic from {weaknesses}"}
         ]
         )
@@ -152,8 +158,8 @@ def ddoetopic(userid, num):
         response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "DO NOT add an intro, outro, or explanation, just return a direct one-word answer to what is asked."},
-            {"role": "user", "content": f"Recommend ONE SPECIFIC academic topic that a {age} year old should learn. Example topics are photosynthesis, algebra, object oriented programming"}
+            {"role": "system", "content": "You are a bot which only returns direct, one-word, short answers."},
+            {"role": "user", "content": f"Recommend one specific and niche academic topic that a {age} year old should learn, which is not {previous_topics}. Examples can be, 'photosynthesis', 'cellular biology', 'object oriented programming'. "}
         ]
         )
         return response.choices[0].message.content.strip()
@@ -166,7 +172,7 @@ def ddoedescription(userid, topic):
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Please don't add an intro or an outro, just return a direct answer to what is asked."},
-            {"role": "user", "content": f"Give a brief description to a {age} year old about {topic}."}
+            {"role": "user", "content": f"Give a brief description to a {age} year old about {topic}. Then, return a paragraph teaching the basics of {topic}"}
         ]
     )
     return response.choices[0].message.content.strip()
@@ -234,4 +240,30 @@ def generate_image(prompt, n=1, size="320x180"):
     # Extract image URL from the response
     image_url = response['data'][0]['url']
     return image_url
-    
+
+def ddoeword(user_id):
+    pref = UserPreferences.query.filter_by(user_id = user_id).first()
+    age = pref.age
+    ddoe = DDOE.query.filter_by(user_id = user_id).first()
+    if not ddoe:
+        previous_words = []
+    else:
+        previous_words = ddoe.previous_words
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": f"You are an english robot which spits out one english vocabulary word at a time. "},
+            {"role": "user", "content": f"Generate a word that a {age} year old should learn, which is not the words {previous_words}"}
+        ]
+    )
+    return response.choices[0].message.content
+
+def ddoedefinition(word):
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": f"Give me the definition of {word}"}
+        ]
+    )
+    return response.choices[0].message.content
+

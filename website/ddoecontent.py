@@ -7,16 +7,16 @@ def configure():
     load_dotenv()
 configure()
 news_api = os.getenv('news_api')
-google_api = os.getenv('googlejson_api')
-google_cse = os.getenv('googjson_cse')
+google_api = os.getenv('google_api')
+google_cse = os.getenv('google_cse')
 tiktok_id = os.getenv('client_key')
 tiktok_secret = os.getenv('client_secret')
 
 
-def fetch_news_articles(query, page_size=25, exclude_domains=['removed.com', 'plos.org']):
+def fetch_news_articles(query, page_size=25, exclude_domains=['removed.com', 'plos.org', 'youtube.com']):
     if isinstance(query, list):
         query = ' '.join(query)
-    api_key = 'your_news_api_key'  # Replace with your News API key
+    api_key = news_api  # Replace with your News API key
     url = f'https://newsapi.org/v2/everything?q={query}&pageSize={page_size}&apiKey={api_key}'
     response = requests.get(url)
     articles = response.json().get('articles', [])
@@ -31,11 +31,13 @@ def fetch_news_articles(query, page_size=25, exclude_domains=['removed.com', 'pl
 
     return all_titles, all_urls
 
-def fetch_blog_articles(query, page_size=25, exclude_domains=['removed.com', 'plos.org']):
+def fetch_blog_articles(query, page_size=25, exclude_domains=['removed.com', 'plos.org', 'youtube.com']):
     if isinstance(query, list):
         query = ' '.join(query)
-    api_key = 'your_google_api_key'  # Replace with your Google API key
-    cse_id = 'your_google_cse_id'  # Replace with your Google CSE ID
+    api_key=google_api
+    cse_id=google_cse
+    # api_key = 'AIzaSyAjSqLZie3RmSvPt4Xz4fv5yshxk0SFmx8' #remember to comment this out
+    # cse_id = '16a4cc97a3b434de8' #remember to comment this out
     url = f'https://www.googleapis.com/customsearch/v1?q={query}&cx={cse_id}&key={api_key}&num={page_size}'
     response = requests.get(url)
     search_results = response.json().get('items', [])
@@ -50,7 +52,42 @@ def fetch_blog_articles(query, page_size=25, exclude_domains=['removed.com', 'pl
 
     return all_titles, all_urls
 
-def fetch_tiktok(query, page_size=25):
+import requests
+
+def fetch_youtubeshorts(query, page_size=10, duration='short', page_token=None):
+    all_reels = []
+    api_key = google_api  # Replace with your API key
+    search_url = 'https://www.googleapis.com/youtube/v3/search'
+    search_params = {
+        'part': 'snippet',
+        'q': query,
+        'type': 'video',
+        'videoDuration': duration,
+        'maxResults': page_size,
+        'key': api_key
+    }
+    
+    if page_token:
+        search_params['pageToken'] = page_token
+    
+    response = requests.get(search_url, params=search_params)
+    if response.status_code == 200:
+        results = response.json()
+        for item in results['items']:
+            video_id = item['id']['videoId']
+            title = item['snippet']['title']
+            all_reels.append({'title': title, 'url': f'https://www.youtube.com/watch?v={video_id}', 'video_id': video_id})
+        
+        # Get the next page token
+        next_page_token = results.get('nextPageToken')
+        return all_reels, next_page_token
+    else:
+        print(f"Error: {response.status_code}")
+        return [], None
+
+
+    
+def fetch_tiktok(query, page_size=25): #must fix
     client_id = tiktok_id
     client_secret = tiktok_secret
     if isinstance(query, list):
@@ -116,6 +153,26 @@ def scrape_articles(url):
 
     return article_text, article_media
 
+
+def is_embeddable(url):
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code != 200:
+            return False
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Check for X-Frame-Options or Content-Security-Policy headers
+        x_frame_options = response.headers.get('X-Frame-Options')
+        csp = response.headers.get('Content-Security-Policy')
+        if x_frame_options and x_frame_options.lower() in ['deny', 'sameorigin']:
+            return False
+        if csp and 'frame-ancestors' in csp:
+            return False
+        return True
+    except:
+        return False
+
+
+
 # topics = ['AI']
 # titles, sources, urls= fetch_news_articles(topics)
 
@@ -135,5 +192,3 @@ def scrape_articles(url):
 
 # news, urls = fetch_news_articles('coding', 10)
 # print(scrape_articles(urls[0]))
-
-#print(fetch_blog_articles('coding', 10))

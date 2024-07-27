@@ -103,9 +103,14 @@ def chatbot():
 
 @views.route('/dangerous')
 def dangerous():
-    
     users = Users.query
+    ddoe = DDOE.query
+    pref = UserPreferences.query
     for i in users:
+        db.session.delete(i)
+    for i in ddoe:
+        db.session.delete(i)
+    for i in pref:
         db.session.delete(i)
     
     db.session.commit()
@@ -135,6 +140,8 @@ def test():
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         age = userpref.age
         prompt = request.args.get('prompt')
+        if prompt == 'random':
+            prompt = gpt.ddoetopic(current_user.id, random.randint(0, 3))
         formats = request.args.get('formats')
 
         questions, choices, gptans = gpt.create_test(prompt, age, formats)
@@ -163,12 +170,12 @@ def checktest():
 def checksandw():
     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
     current_strengths = userpref.strengths or []
-    new_strength = 'math'
+    new_strength = 'WHats UP'
     if new_strength not in current_strengths:
-        current_strengths.append(new_strength)
+        userpref.strengths.append(new_strength)
 
                 # Update the user preferences with the new strengths
-        userpref.strengths = current_strengths
+        #userpref.strengths = current_strengths
         db.session.commit()
         print("stregnth added successfully")
     
@@ -178,30 +185,60 @@ def checksandw():
 def home():
     today = datetime.now().date()
     ddoe = DDOE.query.filter_by(user_id=current_user.id).first()
-    
+
     if not ddoe:
         topic = gpt.ddoetopic(current_user.id, 0)
         description = gpt.ddoedescription(current_user.id, topic)
         examples = gpt.ddoeexamples(current_user.id, topic)
-        ddoe = DDOE(user_id=current_user.id, topic = topic, description = description, examples = examples, last_updated=today)
+        word = gpt.ddoeword(current_user.id)
+        ddoe = DDOE(
+            user_id=current_user.id, 
+            topic=topic, 
+            description=description, 
+            examples=examples, 
+            last_updated=today, 
+            previous_topics=[topic], 
+            word=word, 
+            previous_words=[word],
+            current_streak=1
+        )
         db.session.add(ddoe)
         db.session.commit()
+        print(f"New DDOE created: {ddoe}")
 
-    if ddoe.last_updated.date() == today:
-        ddoe.last_updated = datetime.now()
-        db.session.commit()
-    else:
+    if ddoe.last_updated != today or request.method == "POST":
+        yesterday = today - timedelta(days=1)
+        
+        if ddoe.last_updated == yesterday:
+            ddoe.current_streak += 1
+        else:
+            ddoe.current_streak = 1
+        
         num = random.randint(0, 3)
+    
         ddoe.topic = gpt.ddoetopic(current_user.id, num)
         ddoe.description = gpt.ddoedescription(current_user.id, ddoe.topic)
         ddoe.examples = gpt.ddoeexamples(current_user.id, ddoe.topic)
+        ddoe.word = gpt.ddoeword(current_user.id)
+        ddoe.definition = gpt.ddoedefinition(ddoe.word)
         ddoe.last_updated = today
+        
+        if not ddoe.previous_topics:
+            ddoe.previous_topics = []
+        if not ddoe.previous_words:
+            ddoe.previous_words = []
+        
+        ddoe.previous_topics.append(ddoe.topic)
+        ddoe.previous_words.append(ddoe.word)
+
         db.session.commit()
+        print(f"{ddoe.topic}, {ddoe.previous_topics}, {ddoe.word}, {ddoe.last_updated}, {today}, {request.method}")
 
     session['ddoetopic'] = ddoe.topic
     session['description'] = ddoe.description
     session['examples'] = ddoe.examples
-    return render_template('home.html', topic=ddoe.topic, description=ddoe.description, examples=ddoe.examples)
+    
+    return render_template('home.html', topic=ddoe.topic, description=ddoe.description, examples=ddoe.examples, word=ddoe.word, definition = ddoe.definition)
     
 @login_required
 @views.route("/logout")
@@ -217,6 +254,9 @@ def logout():
 def articles():
     if request.method == 'POST':
         topic = request.form.get('topic')
+        if topic == 'reccomend':
+            topic = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+        print(topic)
         article_list = session.get('article_list', [])
         articles, news, blog = find_articles(topic)
         for i in articles:
@@ -231,10 +271,60 @@ def articles():
 
     return render_template('articles.html', articles = article_list, topic=topic)
     # news=news_list, blogs = blog_list,
+
 @login_required
-@views.route('/random')
+@views.route("/reels", methods = ['GET', 'POST'])
+def reels():
+    if request.method == 'POST':
+        topic = request.form.get('topic')
+        if topic == 'reccomend':
+            topic = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+        previous_topic = session.get('reels_previous_topic', '')
+        
+        if topic != previous_topic:
+            # Reset the page token if the topic changes
+            prev_npt = None
+        else:
+            # Use the existing page token if the topic is the same
+            prev_npt = session.get('reels_npt', None)
+        
+        # Fetch results with the current topic and page token
+        reels_list, npt = ddoecontent.fetch_youtubeshorts(topic, page_token=prev_npt,)
+        
+        # Update session with the current state
+        session['reels_previous_topic'] = topic
+        session['reels_npt'] = npt  # Store the new page token
+        session['reels_list'] = reels_list
+    elif 'ddoetopic' in session:
+        topic = session.get('ddoetopic') 
+        npt = session.get('reels_npt', None)
+        reels_list, npt = ddoecontent.fetch_youtubeshorts(topic, page_token=npt)
+        session['reels_previous_topic'] = topic
+        session['reels_npt'] = npt
+        session['reels_list'] = reels_list
+    else:
+        return redirect(url_for('views.home'))
+
+    return render_template('reels.html', reels_list=reels_list, topic=topic)
+
+@login_required
+@views.route('/testing')
 def randomx():
-    return render_template('random.html', currentuser = current_user.id)
+    ddoe = DDOE.query.filter_by(user_id = current_user.id).first()
+    for i in range(0, 10):
+        print(gpt.ddoetopic(current_user.id, 0))
+        print(ddoe.previous_topics)
+        print(gpt.ddoeword(current_user.id))
+    return render_template('index.html')
+
+@login_required
+@views.route("/account")
+def account():
+    ddoe = DDOE.query.filter_by(user_id=current_user.id).first()
+    user = Users.query.filter_by(id=current_user.id).first()
+    current_streak = ddoe.current_streak
+    return render_template('account.html', current_streak=current_streak, user=user)
+
 
 def find_articles(topic):
     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
@@ -260,16 +350,18 @@ def find_articles(topic):
         
     try:
         for i in range(len(news_titles)): #Adding News Articles to 'article_list'
-            news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-            news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-            article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
+            if ddoecontent.is_embeddable(news_urls[i]):
+                news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
+                news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
+                article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
     except:
         pass
     try:
         for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
-            blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-            blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-            article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
+            if ddoecontent.is_embeddable(blog_urls[i]):
+                blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
+                blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
+                article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
     except:
         pass
         
@@ -290,17 +382,8 @@ def find_articles(topic):
 def navbar():
     return render_template('index.html')
 
-@login_required
-@views.route("/reels")
-def reels():
-    if 'ddoetopic' not in session:
-        return redirect(url_for('views.home'))
-    return render_template('index.html')
 
-@login_required
-@views.route("/account")
-def account():
-    return render_template('index.html')
+
 
 #OLD ARTICLES WITH AI-GENERATED SUMMARY
 # @login_required

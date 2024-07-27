@@ -22,8 +22,15 @@
         <p>{{topic}}</p>
         <p>{{description}}</p>
         <p>{{examples}}</p>
+        <p>Your daily word is: {{word}}</p>
+        <p>{{definition}}</p>
+        <a href="{{ url_for('views.test', prompt=topic, formats='written') }}">Take a test about {{ topic }}</a>
+        <form method="POST" id="newTopicForm" action="{{ url_for('views.home') }}">
+            <input type="hidden" name="topic" value="newtopic">
+            <button type="submit">Give Me a New Topic</button>
+        </form>
     </div>
-    <a href="{{ url_for('views.test', prompt=topic, formats='written') }}">Take a test about {{ topic }}</a>
+    
     <script>
         document.getElementById('revealButton').addEventListener('click', function() {
             var hiddenContent = document.getElementById('hiddenContent');
