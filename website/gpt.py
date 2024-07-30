@@ -85,7 +85,7 @@ def testsandw(correctans, userid, topic):
     score = sum(int(ans[0]) for ans in correctans) / len(correctans)
     print(score)
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
-    strengths = userpref.strengthsq
+    strengths = userpref.strengths
     weaknesses = userpref.weaknesses
     if score > 0.7:
         if topic not in strengths:

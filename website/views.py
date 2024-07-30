@@ -152,6 +152,8 @@ def test():
         session['questions'] = questions
         session['testtopic'] = prompt
         return render_template('test.html', questions=questions, choices = choices, formats = formats)
+    
+
 
 @login_required
 @views.route("/checktest", methods=['GET', 'POST'])
@@ -185,6 +187,12 @@ def checksandw():
 def home():
     today = datetime.now().date()
     ddoe = DDOE.query.filter_by(user_id=current_user.id).first()
+    if request.args.get('topic'):
+        ddoe.topic=request.args.get('topic')
+        topic = ddoe.topic
+        ddoe.description = gpt.ddoedescription(current_user.id, topic)
+        ddoe.examples=gpt.ddoeexamples(current_user.id, topic)
+        db.session.commit()
 
     if not ddoe:
         topic = gpt.ddoetopic(current_user.id, 0)
@@ -240,6 +248,13 @@ def home():
     
     return render_template('home.html', topic=ddoe.topic, description=ddoe.description, examples=ddoe.examples, word=ddoe.word, definition = ddoe.definition)
     
+
+@login_required
+@views.route('/previoustopics')
+def previous_topics():
+    ddoe = DDOE.query.filter_by(user_id=current_user.id).first()
+    previous_topics = ddoe.previous_topics
+    return render_template('prevtopic.html', previous_topics = previous_topics)
 @login_required
 @views.route("/logout")
 def logout():
@@ -254,7 +269,7 @@ def logout():
 def articles():
     if request.method == 'POST':
         topic = request.form.get('topic')
-        if topic == 'reccomend':
+        if topic == 'recommend':
             topic = gpt.ddoetopic(current_user.id, random.randint(0, 3))
         print(topic)
         article_list = session.get('article_list', [])
@@ -277,7 +292,7 @@ def articles():
 def reels():
     if request.method == 'POST':
         topic = request.form.get('topic')
-        if topic == 'reccomend':
+        if topic == 'recommend':
             topic = gpt.ddoetopic(current_user.id, random.randint(0, 3))
         previous_topic = session.get('reels_previous_topic', '')
         
@@ -337,7 +352,7 @@ def find_articles(topic):
     print(topic_keywords)   
     news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
     blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 10)
-    for i in range(0, 10):
+    for i in range(0, 5):
         ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
         try:
             if ai_article[1] is None or len(ai_article[1]) < 25:
@@ -383,7 +398,9 @@ def navbar():
     return render_template('index.html')
 
 
-
+@views.route('testinjs')
+def js():
+    return render_template('js.html')
 
 #OLD ARTICLES WITH AI-GENERATED SUMMARY
 # @login_required

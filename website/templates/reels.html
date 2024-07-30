@@ -1,61 +1,51 @@
 {% extends 'index.html' %}
 {% block content %}
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jearn - Reels</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='reels.css') }}">
 </head>
 <body>
-
-<div class="container mt-4">
-    <div class="row">
-        <!-- Loop through reels_list and generate a card for each reel -->
+    <div class="scroll-container">
+        <!-- Loop through reels_list and generate a section for each reel -->
         {% for reel in reels_list %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ reel.title }}</h5>
-                    <div class="embed-responsive embed-responsive-16by9">
-                        <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/{{ reel.video_id }}" allowfullscreen></iframe>
-                    </div>
-                    <p class="mt-2"><small>Video URL: https://www.youtube.com/watch?v={{ reel.video_id }}</small></p>
-                </div>
+        <div class="video-container" id="video-{{ loop.index }}">
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
             </div>
         </div>
         {% endfor %}
+
+        <!-- Forms at the end of the scrollable container -->
+        <div class="form-container">
+            <form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
+                <p>Would you like to continue learning about {{ topic }}?</p>
+                <input type="hidden" name="topic" value="{{ topic }}">
+                <button type="submit" class="btn btn-primary">Continue learning about {{ topic }}</button>
+            </form>
+            <form method="POST" id="recommendForm" action="{{ url_for('views.reels') }}">
+                <input type="hidden" name="topic" value="recommend">
+                <button type="submit" class="btn btn-secondary">Recommend a topic!</button>
+            </form>
+            <form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
+                <label for="topic">Enter custom topic</label>
+                <input id="topic" name="topic" type="text" placeholder="Enter a topic">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
     </div>
-</div>
 
-<form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
-    <p>Would you like to continue learning about {{ topic }}?</p>
-    <input type="hidden" name="topic" value="{{ topic }}">
-    <button type="submit">Continue learning about {{ topic }}</button>
-</form>
-<form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
-    <input type="hidden" name="topic" value="reccomend">
-    <button type="submit">Reccomend a topic!</button>
-</form>
-<!-- Form for submitting a custom topic -->
-<form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
-    <label for="topic">Enter custom topic</label>
-    <input id="topic" name="topic" type="text" placeholder="Enter a topic">
-    <button type="submit">Submit</button>
-</form>
-
-<!-- Bootstrap JS and dependencies -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<!-- <script>
-    function submitFormCurrentTopic() {
-        // Set the topic value to 'hello'
-        document.getElementById('topic').value = '{{ topic }}';
-        // Submit the form
-        document.getElementById('topicForm').submit();
-    }
-</script> -->
-
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- YouTube API Script -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="{{ url_for('static', filename='reels.js') }}"></script>
 </body>
 </html>
 {% endblock %}

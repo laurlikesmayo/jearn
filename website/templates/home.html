@@ -25,6 +25,8 @@
         <p>Your daily word is: {{word}}</p>
         <p>{{definition}}</p>
         <a href="{{ url_for('views.test', prompt=topic, formats='written') }}">Take a test about {{ topic }}</a>
+        <a href="{{ url_for('views.previous_topics') }}">View Past Topics</a>
+        <br>
         <form method="POST" id="newTopicForm" action="{{ url_for('views.home') }}">
             <input type="hidden" name="topic" value="newtopic">
             <button type="submit">Give Me a New Topic</button>

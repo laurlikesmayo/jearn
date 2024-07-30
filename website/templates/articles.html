@@ -23,7 +23,7 @@
 
         <!-- Modal for each post -->
         <div class="modal fade" id="postModal{{ loop.index }}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-dialog-scrollable" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ article['title'] }}</h5>
@@ -65,7 +65,7 @@
 </form>
 
 <form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
-    <input type="hidden" name="topic" value="reccomend">
+    <input type="hidden" name="topic" value="recommend">
     <button type="submit">Recommend a topic!</button>
 </form>
 

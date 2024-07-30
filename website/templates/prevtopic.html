@@ -1,0 +1,9 @@
+{% extends 'index.html' %}
+{% block content %}
+{% for topic in previous_topics %}
+    <form>
+        <a href="{{ url_for('views.home', topic = topic) }}">{{topic}}</a>
+    </form>
+
+{% endfor %}
+{% endblock %}
