@@ -13,15 +13,17 @@
     <div class="scroll-container">
         <!-- Loop through reels_list and generate a section for each reel -->
         {% for reel in reels_list %}
-        <div class="video-container" id="video-{{ loop.index }}">
-            <div class="embed-responsive embed-responsive-16by9">
-                <iframe class="embed-responsive-item" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
+        <div class="video-container card mb-3" id="video-{{ loop.index }}">
+            <div class="card-body p-0">
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe class="embed-responsive-item" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
         {% endfor %}
 
         <!-- Forms at the end of the scrollable container -->
-        <div class="form-container">
+        <div class="form-container mt-4">
             <form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
                 <p>Would you like to continue learning about {{ topic }}?</p>
                 <input type="hidden" name="topic" value="{{ topic }}">
@@ -33,7 +35,7 @@
             </form>
             <form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
                 <label for="topic">Enter custom topic</label>
-                <input id="topic" name="topic" type="text" placeholder="Enter a topic">
+                <input id="topic" name="topic" type="text" placeholder="Enter a topic" class="form-control mb-2">
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
         </div>

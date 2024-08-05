@@ -9,9 +9,9 @@
     margin-left: auto
 }
 
-.navbar{
+/* .navbar{
     position: fixed;
-}
+} */
 /* index.css */
 
 body {
@@ -22,7 +22,7 @@ p, h1, h2, h3, h4, h5, h6 {
     font-family: 'Sarabun', sans-serif;
 }
 
-a:not(.navbar a) {
+a:not(.sidebar-button):not(.navbar a) {
     display: inline-block;
     padding: 0.375rem 0.75rem;
     font-size: 1rem;
@@ -41,7 +41,7 @@ a:not(.navbar a) {
     transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-a:not(.navbar a):hover {
+a:not(.sidebar-button):not(.navbar a):hover {
     color: #fff;
     background-color: #5a6268;
     border-color: #545b62;

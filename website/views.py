@@ -398,9 +398,9 @@ def navbar():
     return render_template('index.html')
 
 
-@views.route('testinjs')
+@views.route('sidebar')
 def js():
-    return render_template('js.html')
+    return render_template('sidebar.html')
 
 #OLD ARTICLES WITH AI-GENERATED SUMMARY
 # @login_required
