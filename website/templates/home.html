@@ -14,35 +14,88 @@
             font-size: 16px;
             cursor: pointer;
         }
+        .section:not(.more-section){
+            min-height: calc(100vh - 56px);
+        }
+        .more-section{
+            height: 20vh;
+            background-color: #EAECF6
+        }
+    
+        .title-section {
+        background-color: #c1ccff; /* Blue */
+        text-align: center;
+        }
+        .word-section{
+            background-color: #FDF4CD;
+            text-align: center;
+        }
+        .content-section{
+            background-color: #FFFF;
+        }
+        .topic-section {
+        background-color: #F5C2C0; /* Blue */
+        text-align: center;
+        }
+
     </style>
 </head>
 <body>
-    <button id="revealButton">Reveal today's topic!</button>
-    <div id="hiddenContent" class="hidden">
-        <p>{{topic}}</p>
-        <p>{{description}}</p>
-        <p>{{examples}}</p>
-        <p>Your daily word is: {{word}}</p>
-        <p>{{definition}}</p>
-        <a href="{{ url_for('views.test', prompt=topic, formats='written') }}">Take a test about {{ topic }}</a>
-        <a href="{{ url_for('views.previous_topics') }}">View Past Topics</a>
-        <br>
-        <form method="POST" id="newTopicForm" action="{{ url_for('views.home') }}">
-            <input type="hidden" name="topic" value="newtopic">
-            <button type="submit">Give Me a New Topic</button>
-        </form>
-    </div>
-    
-    <script>
-        document.getElementById('revealButton').addEventListener('click', function() {
-            var hiddenContent = document.getElementById('hiddenContent');
-            if (hiddenContent.classList.contains('hidden')) {
-                hiddenContent.classList.remove('hidden');
-            } else {
-                hiddenContent.classList.add('hidden');
-            }
-        });
-    </script>
+    <section class="section title-section d-flex align-items-center">
+        <div class="container-lg">
+          <h1>Daily Dose of Education</h1>
+          <p>Where your personalized learning journey begins.</p>
+          <br>
+          <a href = "#topic-section" class="btn btn-outline-primary" >Reveal Topic</a>
+        </div>
+    </section>
+    <section id = "topic-section" class="section topic-section d-flex align-items-center">
+        <div class="container-lg">
+            <p>Today's topic is.</p>
+          <h1>{{topic}}</h1>
+          <br>
+          <a href = "#content-section" class="btn btn-outline-primary" >Learn More</a>
+          <br>
+          <a class="sidebar-button" style="color: black;" href="{{ url_for('views.previous_topics') }}">View Past Topics</a>
+
+        </div>
+    </section>
+    <section id = "content-section" class="section content-section d-flex align-items-center">
+        <div class="container-lg">
+            <h2 class="text-center">{{topic}}</h2>
+            <hr>
+            <p>{{description}}</p>
+            
+            <strong>Examples include: </strong>
+            <hr>
+            <p>{{examples}}</p>
+            <a href = "#word-section" class="btn btn-outline-primary" >Reveal Word of the Day</a>
+
+        </div>
+    </section>
+    <section id = "word-section" class="section word-section d-flex align-items-center">
+        <div class="container-lg">
+            <h1>{{word}}</h1>
+            <p>{{definition}}</p>
+            <a href = "#more-section" class="btn btn-outline-primary" >More</a>
+
+        </div>
+    </section>
+    <section id="more-section" class="section more-section d-flex align-items-center" style="height: 20vh;">
+        <div class="container-lg d-flex flex-column align-items-center">
+          <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('views.test', prompt=topic, formats='written') }}" style="height: 38px">Take a test about {{ topic }}</a>
+            <form method="POST" id="newTopicForm" action="{{ url_for('views.home') }}" class="d-inline-block">
+              <input type="hidden" name="topic" value="newtopic">
+              <button type="submit" class="btn btn-secondary">Give Me a New Topic</button>
+            </form>
+          </div>
+        </div>
+    </section>
+
+
+
+
 </body>
 </html>
 {% endblock %}

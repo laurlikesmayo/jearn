@@ -1,24 +1,56 @@
 {% extends "index.html" %}
+{% block headers %}
 <head>
     <title>Jearn - Custom Test</title>
 </head>
+{% endblock %}
 {% block content %}
+<div class="container mt-5">
     <form method="POST">
-    {% for i in range(questions | length) %}
-        <h1>{{ questions[i] }}</h1>
-        {% if formats.lower() == "mcq" %}   
-            {% for j in range(choices[i] | length) %}
-                <p>{{ choices[i][j] }}</p>
-            {% endfor %}
-            <br>
-        {% else %}
-            <input id="answer{{ i }}" name="answer{{ i }}" type="text" placeholder="Enter your answer">
-        {% endif %}
-    {% endfor %}
-        <button type="submit">Submit</button>
+        {% for i in range(questions | length) %}
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Question {{ i+1 }}</h5>
+                    <p class="card-text">{{ questions[i] }}</p>
+                    
+                    {% if formats.lower() == "mcq" %}
+                        <input type="hidden" id="answer{{ i }}" name="answer{{ i }}" value="">
+                        <div class="btn-group-vertical" role="group" aria-label="Question {{ i+1 }} choices">
+                            {% for j in range(choices[i] | length) %}
+                                {% if choices[i][j] not in [" ", ""] %}
+                                    <button type="button" class="test-button button btn btn-outline-primary mb-2" 
+                                            id="choice{{ i }}{{ j }}"
+                                            onclick="setAnswer({{ i }}, '{{ choices[i][j] }}', {{j}})">
+                                        {{ choices[i][j] }}
+                                    </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <input id="answer{{ i }}" name="answer{{ i }}" type="text" class="form-control" placeholder="Enter your answer">
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        <div class="text-center">
+            <button type="submit" class="test-button btn btn-success btn-lg">Submit</button>
+        </div>
     </form>
-    
-</body>
-</html>
+</div>
 
+<script>
+    function setAnswer(questionIndex, choice, choiceIndex) {
+        document.getElementById('answer' + questionIndex).value = choice;
+
+        let buttons = document.querySelectorAll(`button[id^='choice${questionIndex}']`);
+
+        buttons.forEach(button => {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-primary');
+        });
+
+        document.getElementById('choice' + questionIndex + choiceIndex).classList.remove('btn-outline-primary');
+        document.getElementById('choice' + questionIndex + choiceIndex).classList.add('btn-primary');
+    }
+</script>
 {% endblock %}

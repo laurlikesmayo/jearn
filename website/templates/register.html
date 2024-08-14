@@ -1,38 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-</head>
-<body>
-    <form action = "/register" method="POST">
-        <br>
-        <div>
-            <label for="username">What is your username? </label><br>
-            <input id="username" name="username" type="text" placeholder="Enter your username">
-        </div>
-        <br>
-        <div>
-            <label for="email">What is your email?</label><br>
-            <input id="email" name="email" type="email" placeholder="Enter your email">
-        </div>
-        <br>
+{% extends 'navbar.html' %}
+{% block headers %}
+<style>
+    .formcontainer{
+        min-height: calc(100vh - 140px);
+    }
+</style>
+<title>Jearn - Register</title>
+{% endblock %}
 
-        <div>
-            <label for="password1">Create a password</label><br>
-            <input id="password1" name="password1" type="password" placeholder="Enter your password">
-        </div> 
+{% block content %}
+<h1 class="text-center">Register</h1>
+<hr>
 
-        <br>
-
-        <div>
-            <label for="password2">Verify the password</label><br>
-            <input id="password2" name="password2" type="password" placeholder="Enter your password2">
+<div class="container-fluid formcontainer d-flex justify-content-center align-items-center">
+    <form action="/register" method="POST" class="w-50">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input id="username" class="form-control" name="username" type="text" placeholder="Enter your username">
         </div>
-        <button type = "submit">Submit</button>
-        
+        <hr>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input id="email" name="email" class="form-control" type="email" placeholder="Enter your email">
+        </div>
+        <hr>
+        <div class="mb-3">
+            <label for="password1" class="form-label">Password</label><br>
+            <input id="password1" class = 'form-control' name="password1" type="password" placeholder="Enter your password">
+        </div>
+        <hr>
+        <div class="mb-3">
+            <label for="password2" class="form-label">Confirm password</label><br>
+            <input id="password2" class = 'form-control' name="password2" type="password" placeholder="Confirm your password">
+        </div>
+        <button type="submit" class="btn btn-primary">Register</button>
+        <a id="link-login" href="/login" class="text-center">Already have an account?</a>
     </form>
     
-</body>
-</html>
+</div>
+{% endblock %}

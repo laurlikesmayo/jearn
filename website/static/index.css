@@ -47,7 +47,7 @@ a:not(.sidebar-button):not(.navbar a):hover {
     border-color: #545b62;
 }
 
-button {
+button:not(.test-button) {
     display: inline-block;
     font-weight: 400;
     color: #fff;

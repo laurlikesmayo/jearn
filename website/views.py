@@ -146,6 +146,15 @@ def test():
 
         questions, choices, gptans = gpt.create_test(prompt, age, formats)
         questions = [item for item in questions if item.strip()]
+        for i in questions:
+            for j in range(0, i):
+                if "option" in choices[i][j].lower():
+                    flash('An error has occured. Please try again.')
+                    return redirect(url_for('create_test'))
+            if "a)" in i.lower():
+                flash("An error has occured. Please try again.")
+                return redirect(url_for('create_test'))
+            
 
         session['gptans'] = gptans
         session['format'] = formats
@@ -164,8 +173,8 @@ def checktest():
     formats = session.get("format")
     topic = session.get("testtopic").split(" ")[0].strip().lower()
     correctans = gpt.checktest(userans, gptans, formats)
-    gpt.testsandw(correctans, current_user.id, topic)
-    return render_template('check_test.html', correctans = correctans, questions=questions)
+    score = gpt.testsandw(correctans, current_user.id, topic)
+    return render_template('check_test.html', score = score, correctans = correctans, questions=questions)
 
 @login_required
 @views.route("/checksandw", methods=['GET', 'POST'])

@@ -1,9 +1,60 @@
 {% extends 'index.html' %}
+
 {% block headers %}
     <title>Jearn - Articles</title>
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+       .modal {
+        z-index: 1050; /* Default for Bootstrap modals */}
+
+    .modal-dialog {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;  /* Full height of the modal */
+        margin: 0;     /* Remove default margin */
+    }
+
+        .card {
+            height: 40vh; /* Adjust this height as needed */
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            height: 3rem; /* Adjust this height as needed */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Limits the text to 2 lines */
+            -webkit-box-orient: vertical;
+        }
+
+        .card-text {
+            height: 4.5rem; /* Adjust this height as needed */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 4; /* Limits text to 3 lines */
+            -webkit-box-orient: vertical;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+    </style>
 {% endblock %}
+
 {% block content %}
+<h1>Articles - {{topic}}</h1>
+<hr>
 <div class="container mt-5">
     <div class="row">
         {% for article in articles %}
@@ -13,14 +64,16 @@
                     <h5 class="card-title">{{ article['title'] }}</h5>
                     {% set summary = article['text'].split()[:25] %}
                     <p class="card-text">{{ summary | join(' ') }}...</p>
-                    <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#postModal{{ loop.index }}">View Post</a>
+                    <a href="#" class="btn btn-primary" onclick="event.preventDefault();" data-toggle="modal" data-target="#postModal{{ loop.index }}">View Post</a>                
                 </div>
             </div>
         </div>
 
+  
+  <!-- Modal -->
         <!-- Modal for each post -->
         <div class="modal fade" id="postModal{{ loop.index }}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">{{ article['title'] }}</h5>
@@ -36,7 +89,6 @@
                         {% endif %}
                         
                         {% if article['url'] %}
-                        <!-- Embed the URL in an iframe if it exists -->
                         <div class="embed-responsive embed-responsive-16by9">
                             <iframe class="embed-responsive-item" src="{{ article['url'] }}" allowfullscreen></iframe>
                         </div>
@@ -52,25 +104,48 @@
         </div>
         {% endfor %}
     </div>
+    <hr>
+    <div class="row">
+        <section id="form-section" class="section form-section d-flex align-items-center" style="height: 30vh;">
+            <div class="container-lg d-flex flex-column align-items-center">
+              <div class="d-flex justify-content-center gap-3">
+                
+                <form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
+                    <input type="hidden" name="topic" value="{{ topic }}">
+                    <button type="submit">Continue learning about {{ topic }}</button>
+                </form>
+        
+                <form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
+                    <input type="hidden" name="topic" value="recommend">
+                    <button type="submit">Recommend a topic!</button>
+                </form>
+                <br>
+        
+                <!-- Form for submitting a custom topic -->
+                <form method="POST" id="topicForm" action="{{ url_for('views.articles') }}">
+                    <label for="topic">Enter custom topic</label>
+                    <input id="topic" name="topic" type="text" placeholder="Enter a topic">
+                    <button type="submit">Submit</button>
+                </form>
+
+              </div>
+            </div>
+        </section>
+        <!-- Form for selecting or entering a topic -->
+        
+    </div>
 </div>
 
-<!-- Form for selecting or entering a topic -->
-<form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
-    <p>Would you like to continue learning about {{ topic }}?</p>
-    <input type="hidden" name="topic" value="{{ topic }}">
-    <button type="submit">Continue learning about {{ topic }}</button>
-</form>
+<script>
+    // When the modal is shown, disable background scroll
+$('.modal').on('show.bs.modal', function () {
+    $('body').addClass('modal-open');
+});
 
-<form method="POST" id="continueForm" action="{{ url_for('views.articles') }}">
-    <input type="hidden" name="topic" value="recommend">
-    <button type="submit">Recommend a topic!</button>
-</form>
-
-<!-- Form for submitting a custom topic -->
-<form method="POST" id="topicForm" action="{{ url_for('views.articles') }}">
-    <label for="topic">Enter custom topic</label>
-    <input id="topic" name="topic" type="text" placeholder="Enter a topic">
-    <button type="submit">Submit</button>
-</form>
+// When the modal is hidden, re-enable background scroll
+$('.modal').on('hidden.bs.modal', function () {
+    $('body').removeClass('modal-open');
+});
+</script>
 
 {% endblock %}

@@ -1,24 +1,56 @@
 {% extends "index.html" %}
+{% block headers %}
 <head>
     <title>Jearn - Custom Test</title>
+    <style>
+        /* Optional: Add any custom styles here if needed */
+    </style>
 </head>
+{% endblock %}
 {% block content %}
-<body>
-    <form action = "/createtest" method="POST">
-        <div>
-            <label for="topic">What topic are you tested on?</label><br>
-            <input id="topic" name="prompt" type="text" placeholder="Enter the topic">
-        </div> 
-        <br>
-        <div>
-            <label for="format">What format are you tested on?</label><br>
-            <input id="format" name="format" type="text" placeholder="Enter the format">
-        </div> 
-
-        <button type = "submit">Submit</button>
-
-
+<h1 class="text-center">AI-generated Test</h1>
+<hr>
+<div class="container-fluid formcontainer d-flex justify-content-center align-items-center">
+    <form action="/createtest" method="POST">
+        <div class="mb-3">
+            <label for="topic" class="form-label">What topic are you tested on?</label>
+            <input id="topic" class="form-control" name="prompt" type="text" placeholder="Enter topic">
+        </div>
+        <hr>
+        <div class="mb-3">
+            <label for="format" class="form-label">Choose your format</label> <br>
+            <input type="hidden" id="format-input" name="format" value="">
+            <button type="button" class="test-button button btn btn-outline-primary" id="format-written" onclick="setAnswer('written', 'format-written')">
+                Written
+            </button>
+            <button type="button" class="test-button button btn btn-outline-primary" id="format-mcq" onclick="setAnswer('mcq', 'format-mcq')">
+                Multiple Choice
+            </button>
+        </div>
+        
+        <button type="submit" class="btn btn-primary ">Submit</button>
+        <a href="{{ url_for('views.test', prompt='random', formats='written') }}">Give me a random topic!</a>
     </form>
-    <a href="{{ url_for('views.test', prompt='random', formats='written') }}">Give me a random topic!</a>
-</html>
+    
+</div>
+<script>
+    function setAnswer(format, buttonId) {
+        // Set the value of the hidden input to the selected format
+        document.getElementById('format-input').value = format;
+
+        // Get all buttons for the format selection
+        const buttons = document.querySelectorAll('.test-button');
+
+        // Remove the 'btn-primary' class from all buttons
+        buttons.forEach(button => {
+            button.classList.remove('btn-primary');
+            button.classList.add('btn-outline-primary'); // Ensure all buttons have the outline style
+        });
+
+        // Add the 'btn-primary' class to the clicked button
+        const selectedButton = document.getElementById(buttonId);
+        selectedButton.classList.remove('btn-outline-primary');
+        selectedButton.classList.add('btn-primary');
+    }
+</script>
 {% endblock %}

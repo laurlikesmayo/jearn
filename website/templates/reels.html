@@ -1,53 +1,49 @@
 {% extends 'index.html' %}
-{% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block headers %}
     <title>Jearn - Reels</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='reels.css') }}">
-</head>
-<body>
-    <div class="scroll-container">
-        <!-- Loop through reels_list and generate a section for each reel -->
-        {% for reel in reels_list %}
-        <div class="video-container card mb-3" id="video-{{ loop.index }}">
-            <div class="card-body p-0">
-                <div class="embed-responsive embed-responsive-16by9">
-                    <iframe class="embed-responsive-item" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="scroll-container">
+            <!-- Loop through reels_list and generate a section for each reel -->
+            {% for reel in reels_list %}
+            <div class="video-container card mb-3" id="video-{{ loop.index }}">
+                <div class="card-body p-0">
+                    <div class="embed-responsive embed-responsive-16by9">
+                        <iframe class="embed-responsive-item" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
+                    </div>
                 </div>
             </div>
+            {% endfor %}
+    
+            <!-- Forms at the end of the scrollable container -->
+            <div class="form-container mt-4">
+                <form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
+                    <p>Would you like to continue learning about {{ topic }}?</p>
+                    <input type="hidden" name="topic" value="{{ topic }}">
+                    <button type="submit" class="btn btn-primary">Continue learning about {{ topic }}</button>
+                </form>
+                <form method="POST" id="recommendForm" action="{{ url_for('views.reels') }}">
+                    <input type="hidden" name="topic" value="recommend">
+                    <button type="submit" class="btn btn-secondary">Recommend a topic!</button>
+                </form>
+                <form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
+                    <label for="topic">Enter custom topic</label>
+                    <input id="topic" name="topic" type="text" placeholder="Enter a topic" class="form-control mb-2">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
         </div>
-        {% endfor %}
+    
+        <!-- Bootstrap JS and dependencies -->
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <!-- YouTube API Script -->
+        <script src="https://www.youtube.com/iframe_api"></script>
+        <script src="{{ url_for('static', filename='reels.js') }}"></script>
 
-        <!-- Forms at the end of the scrollable container -->
-        <div class="form-container mt-4">
-            <form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
-                <p>Would you like to continue learning about {{ topic }}?</p>
-                <input type="hidden" name="topic" value="{{ topic }}">
-                <button type="submit" class="btn btn-primary">Continue learning about {{ topic }}</button>
-            </form>
-            <form method="POST" id="recommendForm" action="{{ url_for('views.reels') }}">
-                <input type="hidden" name="topic" value="recommend">
-                <button type="submit" class="btn btn-secondary">Recommend a topic!</button>
-            </form>
-            <form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
-                <label for="topic">Enter custom topic</label>
-                <input id="topic" name="topic" type="text" placeholder="Enter a topic" class="form-control mb-2">
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
-        </div>
     </div>
-
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <!-- YouTube API Script -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="{{ url_for('static', filename='reels.js') }}"></script>
-</body>
-</html>
 {% endblock %}
