@@ -18,6 +18,8 @@ class Users(db.Model, UserMixin):
     password = db.Column(db.String(50), nullable = False)
     preferences = db.relationship('UserPreferences', backref = 'preferences')
     dailytopic = db.relationship('DDOE', backref = 'preferences')
+    notes = db.relationship('SavedContent', backref = 'savedcontent')
+
 
 
 
@@ -43,6 +45,14 @@ class DDOE(db.Model, UserMixin):
     topic = db.Column(db.String(500))
     description = db.Column(db.String(1000))
     examples = db.Column(db.String(1000))
+
+class SavedContent(db.Model, UserMixin):
+    id = db.Column('id', db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    title = db.Column(db.String(500))
+    content = db.Column(db.String(10000)) #video URL
+    note = db.Column(db.String(10000))
+
 
 
 

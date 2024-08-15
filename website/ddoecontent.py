@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 from dotenv import load_dotenv
 import os
+import yt_dlp
 def configure():
     load_dotenv()
 configure()
@@ -76,6 +77,8 @@ def fetch_youtubeshorts(query, page_size=10, duration='short', page_token=None):
         for item in results['items']:
             video_id = item['id']['videoId']
             title = item['snippet']['title']
+            
+        
             all_reels.append({'title': title, 'url': f'https://www.youtube.com/watch?v={video_id}', 'video_id': video_id})
         
         # Get the next page token
@@ -170,6 +173,47 @@ def is_embeddable(url):
         return True
     except:
         return False
+
+import yt_dlp
+
+# def get_video_info(id): #slow method
+#     url = f'https://www.youtube.com/watch?v={id}'
+#     ydl_opts = {
+#         'quiet': True,  # Suppress output
+#         'noplaylist': True,  # Only process the single video, not playlists
+#         'skip_download': True,  # Skip downloading the video
+#         'extract_flat': True,  # Only extract the flat metadata (avoids unnecessary details)
+#         'writeinfojson': False,  # Do not write metadata to a JSON file
+#     }
+    
+#     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#         info = ydl.extract_info(url, download=False)
+        
+#     width = info.get('width')
+#     height = info.get('height')
+    
+#     if width is None or height is None:
+#         raise Exception("Unable to get video dimensions")
+    
+#     return height, width
+
+def get_video_info(video_id):
+    url = f'https://www.youtube.com/watch?v={video_id}'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    # Find dimensions in the page source
+    # Note: This approach may vary depending on YouTube's page structure
+    meta_tags = soup.find_all('meta')
+    for tag in meta_tags:
+        if 'property' in tag.attrs and tag.attrs['property'] == 'og:video:width':
+            width = tag.attrs['content']
+        elif 'property' in tag.attrs and tag.attrs['property'] == 'og:video:height':
+            height = tag.attrs['content']
+    
+    return width, height
+
+
 
 
 

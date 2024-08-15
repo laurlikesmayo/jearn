@@ -6,18 +6,30 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 // Create an array to store YouTube player objects
 let players = [];
+console.log('js working');
 
 // This function creates an <iframe> (and YouTube player) after the API code downloads.
 function onYouTubeIframeAPIReady() {
+    console.log('YouTube IFrame API ready'); // Add this log
     const iframes = document.querySelectorAll('iframe');
-    iframes.forEach((iframe, index) => {
-        players[index] = new YT.Player(iframe.id, {
-            events: {
-                'onStateChange': onPlayerStateChange
-            }
+    if (iframes.length > 0) {
+        iframes.forEach((iframe, index) => {
+            players[index] = new YT.Player(iframe.id, {
+                events: {
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+            console.log('iframe ready', iframe.id); // Add iframe ID log
         });
-    });
+    } else {
+        console.log('No iframes found'); // Log if no iframes found
+    }
 }
+
+
+
+
+
 
 // Listen for changes in player state
 function onPlayerStateChange(event) {
@@ -43,7 +55,6 @@ function checkInView() {
         }
     });
 }
-
 
 // Add an event listener for scroll events
 window.addEventListener('scroll', checkInView);

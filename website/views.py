@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint, render_template, request, url_for, redirect, session, flash, jsonify
 from datetime import timedelta, datetime
 from werkzeug.security import generate_password_hash, check_password_hash 
-from .models import Users, UserPreferences, DDOE
+from .models import Users, UserPreferences, DDOE, SavedContent
 from sqlalchemy.orm.attributes import flag_modified
 import random
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
@@ -146,12 +146,16 @@ def test():
 
         questions, choices, gptans = gpt.create_test(prompt, age, formats)
         questions = [item for item in questions if item.strip()]
-        for i in questions:
+        for i in range(0, len(questions)):
             for j in range(0, i):
-                if "option" in choices[i][j].lower():
-                    flash('An error has occured. Please try again.')
-                    return redirect(url_for('create_test'))
-            if "a)" in i.lower():
+                try:
+                    if "option" in choices[i][j].lower():
+                        flash('An error has occured. Please try again.')
+                        return redirect(url_for('create_test'))
+                    
+                except:
+                    pass
+            if "a)" in questions[i].lower():
                 flash("An error has occured. Please try again.")
                 return redirect(url_for('create_test'))
             
@@ -172,7 +176,7 @@ def checktest():
     gptans = session.get("gptans")
     formats = session.get("format")
     topic = session.get("testtopic").split(" ")[0].strip().lower()
-    correctans = gpt.checktest(userans, gptans, formats)
+    correctans = gpt.checktest(userans, gptans, formats, questions)
     score = gpt.testsandw(correctans, current_user.id, topic)
     return render_template('check_test.html', score = score, correctans = correctans, questions=questions)
 
@@ -394,7 +398,22 @@ def find_articles(topic):
 
     return article_list, news_list, blog_list
 
-
+@login_required
+@app.route('/save_note', methods=['POST'])
+def save_note():
+    data = request.get.json()
+    video_id = data['video_id']
+    note_content = data['note']
+    video_title = data.get('video_title', 'Unknown Title')
+    new_note = SavedContent(
+        user_id = current_user.id,
+        title=video_title,
+        content=video_id,
+        note = note_content
+    )
+    db.session.add(new_note)
+    db.session.commit()
+    return jsonify({'status': 'success', 'message': 'Note saved successfully'})
 
 
 

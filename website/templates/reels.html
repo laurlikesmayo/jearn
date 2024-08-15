@@ -1,49 +1,137 @@
 {% extends 'index.html' %}
 {% block headers %}
     <title>Jearn - Reels</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='reels.css') }}">
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="{{ url_for('static', filename='reels.js') }}"></script>
+    <style>
+        .portrait-card {
+            width: auto;
+            height: calc(100vh - 59px);
+            aspect-ratio: 9/16;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .video-container {
+            width: auto;
+            height: calc(100% - 36px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .cropped-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+        }
+
+        .notepad-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            background-color: white;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .btn.close-modal {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <div class="scroll-container">
-            <!-- Loop through reels_list and generate a section for each reel -->
-            {% for reel in reels_list %}
-            <div class="video-container card mb-3" id="video-{{ loop.index }}">
-                <div class="card-body p-0">
-                    <div class="embed-responsive embed-responsive-16by9">
-                        <iframe class="embed-responsive-item" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
+<h1>Reels - {{topic}}</h1>
+<hr>
+<div class="container mt-5">
+    <div class="scroll-container d-flex flex-row flex-wrap" style="scroll-snap-type: y mandatory;">
+        <!-- Loop through reels_list and generate a section for each reel -->
+        {% for reel in reels_list %}
+            <div class="card text-center portrait-card" style="scroll-snap-align: start;">
+                <div class="card-header">
+                    {{ reel['title'] }}
+                </div>
+                <div class="card-body">
+                    <div class="video-container">
+                        <iframe class="cropped-video" id="player-{{ loop.index }}" src="https://www.youtube.com/embed/{{ reel.video_id }}?enablejsapi=1" allowfullscreen></iframe>
+                    </div>
+                    
+                    <!-- Button to open the notepad modal -->
+                    <button data-toggle="modal" data-target="#exampleModal"class="btn btn-primary open-notepad" data-video-id="{{ reel['video_id'] }}" data-title="{{ reel['title'] }}" data-index="{{ loop.index }}">Notes</button>
+                    <!-- Notepad Modal -->
+                    <div class="notepad-modal" id="notepad-modal-{{ loop.index }}" style="display: none;">
+                        <button class="btn btn-danger close-modal">X</button>
+                        <textarea id="note-content-{{ loop.index }}" class="form-control" placeholder="Write your note here..."></textarea>
+                        <button class="btn btn-success save-note mt-2" data-video-id="{{ reel['video_id'] }}" data-title="{{ reel['title'] }}" data-index="{{ loop.index }}">Save Note</button>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-    
-            <!-- Forms at the end of the scrollable container -->
-            <div class="form-container mt-4">
-                <form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
-                    <p>Would you like to continue learning about {{ topic }}?</p>
-                    <input type="hidden" name="topic" value="{{ topic }}">
-                    <button type="submit" class="btn btn-primary">Continue learning about {{ topic }}</button>
-                </form>
-                <form method="POST" id="recommendForm" action="{{ url_for('views.reels') }}">
-                    <input type="hidden" name="topic" value="recommend">
-                    <button type="submit" class="btn btn-secondary">Recommend a topic!</button>
-                </form>
-                <form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
-                    <label for="topic">Enter custom topic</label>
-                    <input id="topic" name="topic" type="text" placeholder="Enter a topic" class="form-control mb-2">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
-            </div>
-        </div>
-    
-        <!-- Bootstrap JS and dependencies -->
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-        <!-- YouTube API Script -->
-        <script src="https://www.youtube.com/iframe_api"></script>
-        <script src="{{ url_for('static', filename='reels.js') }}"></script>
-
+        {% endfor %}
     </div>
+
+    <!-- Forms at the end of the scrollable container -->
+    <hr>
+    <div class="form-container mt-4">
+        <form method="POST" id="continueForm" action="{{ url_for('views.reels') }}">
+            <input type="hidden" name="topic" value="{{ topic }}">
+            <button type="submit" class="btn btn-primary">Continue learning about {{ topic }}</button>
+        </form>
+        <form method="POST" id="recommendForm" action="{{ url_for('views.reels') }}">
+            <input type="hidden" name="topic" value="recommend">
+            <button type="submit" class="btn btn-secondary">Recommend a topic!</button>
+        </form>
+        <form method="POST" id="topicForm" action="{{ url_for('views.reels') }}">
+            <label for="topic">Enter custom topic</label>
+            <input id="topic" name="topic" type="text" placeholder="Enter a topic" class="form-control mb-2">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Open Notepad
+    $('.open-notepad').click(function() {
+        var index = $(this).data('index');
+        $('#notepad-modal-' + index).toggle();
+    });
+
+    // Close Notepad
+    $('.notepad-modal .close-modal').click(function() {
+        $(this).closest('.notepad-modal').hide();
+    });
+
+    // Save Note
+    $('.save-note').click(function() {
+        var videoId = $(this).data('video-id');
+        var videoTitle = $(this).data('title');
+        var index = $(this).data('index');
+        var noteContent = $('#note-content-' + index).val();
+
+        $.ajax({
+            type: 'POST',
+            url: '/save_note',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                video_id: videoId,
+                video_title: videoTitle, // Sending the video title along with the note
+                note: noteContent
+            }),
+            success: function(response) {
+                alert('Note saved successfully!');
+                $('#notepad-modal-' + index).hide(); // Hide the notepad after saving
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

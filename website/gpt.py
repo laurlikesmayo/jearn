@@ -31,7 +31,9 @@ def create_test(prompt, age, format):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": f"You are a teacher creating a test about {prompt} in {format} format. The level of the test should be for a {age} year old."},
+            {"role": "system", "content": f"You are a teacher creating a test about {prompt} in {format} format. The level of the test should be for a {age} year old. "},
+            {"role": "system", "content": f"The question should only have one correct answer, not an open ended question with multiple interpretations. "},
+
             {"role": "user", "content": "Generate a list of questions. Do not list any of the answers / mcq choices. Do not include an intro or outro."},
         ]
     )
@@ -58,26 +60,39 @@ def create_test(prompt, age, format):
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "Do not give an intro or an outro."},
-                    {"role": "user", "content": f"Given this question '{questions[i]}', give me a concise answer to that question"}]
+                    {"role": "system", "content": "You are a test robot which spits consise answers."},
+                    {"role": "user", "content": f"Give me the answer to this question: {questions[i]}" }]
             )
             answer = response.choices[0].message.content
             gptans.append(answer)
 
     return questions, choice, gptans
 
-def checktest(userans, gptans, formats):
+def checktest(userans, gptans, formats, questions):
     correctans = []
-    for i in range(len(userans)):
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a teacher checking a student's test. Print 1 if the answer is correct, 0 if it is wrong. Do not include an intro/outro/explanation."},
-                {"role": "user", "content": f"Is the student's answer '{userans[i]}' along the same lines as the teacher's answer '{gptans[i]}'? If it is, print out 1; if it is not, print out 0."}
-            ]
-        )
-        check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
-        correctans.append([check, gptans[i]])
+    if formats =='mcq':
+        for i in range(len(userans)):
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a teacher checking a student's test. Print 1 if the answer is correct, 0 if it is wrong. Do not include an intro/outro/explanation."},
+                    {"role": "user", "content": f"Is the student's answer '{userans[i]}' along the same lines as the teacher's answer '{gptans[i]}'? If it is, print out 1; if it is not, print out 0."}
+                ]
+            )
+            check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
+            correctans.append([check, gptans[i]])
+    else:
+        for i in range(len(userans)):
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a teacher checking a student's test. Print 1 if the answer is correct, 0 if it is wrong. Do not include an intro/outro/explanation."},
+                    {"role": "user", "content": f"Is the student's answer '{userans[i]}' roughly the correct answer to the question {questions[i]}? If it is, print out 1; if it is not, print out 0."}
+                ]
+            )
+            check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
+            correctans.append([check, gptans[i]])
+
 
     return correctans
 

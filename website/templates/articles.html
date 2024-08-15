@@ -1,25 +1,17 @@
 {% extends 'index.html' %}
-
 {% block headers %}
     <title>Jearn - Articles</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
        .modal {
-        z-index: 1050; /* Default for Bootstrap modals */}
+        z-index: 1050;}
 
-    .modal-dialog {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;  /* Full height of the modal */
-        margin: 0;     /* Remove default margin */
-    }
+        .modal-dialog {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;  /* Full height of the modal */
+            margin: 0;     /* Remove default margin */
+        }
 
         .card {
             height: 40vh; /* Adjust this height as needed */
@@ -51,7 +43,6 @@
         }
     </style>
 {% endblock %}
-
 {% block content %}
 <h1>Articles - {{topic}}</h1>
 <hr>
