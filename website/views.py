@@ -401,7 +401,7 @@ def find_articles(topic):
 @login_required
 @app.route('/save_note', methods=['POST'])
 def save_note():
-    data = request.get.json()
+    data = request.get_json()
     video_id = data['video_id']
     note_content = data['note']
     video_title = data.get('video_title', 'Unknown Title')
@@ -416,6 +416,12 @@ def save_note():
     return jsonify({'status': 'success', 'message': 'Note saved successfully'})
 
 
+@app.route('/see_note')
+def see_note():
+    notes = SavedContent.query.filter_by(user_id = current_user.id)
+    for i in notes:
+        print(i.note)
+    return redirect(url_for('views.home'))
 
 
 #INACTIVE ROUTES

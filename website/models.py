@@ -50,7 +50,7 @@ class SavedContent(db.Model, UserMixin):
     id = db.Column('id', db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     title = db.Column(db.String(500))
-    content = db.Column(db.String(10000)) #video URL
+    content = db.Column(db.String(10000), default='') #video URL
     note = db.Column(db.String(10000))
 
 

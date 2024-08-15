@@ -14,7 +14,7 @@
 
         .video-container {
             width: auto;
-            height: calc(100% - 36px);
+            height: 100%;
             overflow: hidden;
             position: relative;
         }
@@ -35,6 +35,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 80%;
+            height: 70%;
             background-color: white;
             padding: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
@@ -46,6 +47,9 @@
             top: 5px;
             right: 10px;
         }
+        .reel-row{
+            width: 100%
+        }
     </style>
 {% endblock %}
 
@@ -56,6 +60,7 @@
     <div class="scroll-container d-flex flex-row flex-wrap" style="scroll-snap-type: y mandatory;">
         <!-- Loop through reels_list and generate a section for each reel -->
         {% for reel in reels_list %}
+        <div class="reel-row row justify-content-center align-items-center" id='section-{{ loop.index }}'>
             <div class="card text-center portrait-card" style="scroll-snap-align: start;">
                 <div class="card-header">
                     {{ reel['title'] }}
@@ -66,15 +71,25 @@
                     </div>
                     
                     <!-- Button to open the notepad modal -->
-                    <button data-toggle="modal" data-target="#exampleModal"class="btn btn-primary open-notepad" data-video-id="{{ reel['video_id'] }}" data-title="{{ reel['title'] }}" data-index="{{ loop.index }}">Notes</button>
                     <!-- Notepad Modal -->
                     <div class="notepad-modal" id="notepad-modal-{{ loop.index }}" style="display: none;">
                         <button class="btn btn-danger close-modal">X</button>
-                        <textarea id="note-content-{{ loop.index }}" class="form-control" placeholder="Write your note here..."></textarea>
-                        <button class="btn btn-success save-note mt-2" data-video-id="{{ reel['video_id'] }}" data-title="{{ reel['title'] }}" data-index="{{ loop.index }}">Save Note</button>
+                        <p>Add a note - optional<p>
+                        <textarea id="note-content-{{ loop.index }}" class="form-control" placeholder="What have you learned?" style="height: 80%;"></textarea>
+                        <button class="btn btn-success save-note mt-2" data-video-id="{{ reel['video_id'] }}" data-title="{{ reel['title'] }}" data-index="{{ loop.index }}">Save Video</button>
                     </div>
                 </div>
             </div>
+            <div class="col-auto">
+                <button data-toggle="modal" data-target="#exampleModal"class="btn btn-primary open-notepad" data-video-id="{{ reel['video_id'] }}" data-title="{{ reel['title'] }}" data-index="{{ loop.index }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+                </button>
+                <br>
+                <a href="#section-{{loop.index + 1}}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </a>
+            </div>
+        </div>
         {% endfor %}
     </div>
 
@@ -127,7 +142,6 @@ $(document).ready(function() {
                 note: noteContent
             }),
             success: function(response) {
-                alert('Note saved successfully!');
                 $('#notepad-modal-' + index).hide(); // Hide the notepad after saving
             }
         });
