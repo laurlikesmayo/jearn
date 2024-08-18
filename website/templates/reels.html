@@ -28,6 +28,24 @@
             min-height: 100%;
             object-fit: cover;
         }
+        .btn-primary.open-notepad, 
+        .links-next{
+            background-color: transparent;  /* Make the background invisible */
+            border: none;                   /* Remove any borders */
+            padding: 0;                     /* Remove padding */
+        }
+
+        .btn-primary.open-notepad svg, 
+        .links-next svg {
+            fill: none;                     /* Keep the SVG fill transparent */
+            stroke: #000000;                /* Set the SVG stroke color to black */
+        }
+
+        .btn-primary.open-notepad:hover, 
+        .links-next:hover {
+            background-color: transparent;  /* Keep background invisible on hover */
+            border: none;                   /* No borders on hover */
+        }
 
         .notepad-modal {
             position: absolute;
@@ -85,7 +103,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
                 </button>
                 <br>
-                <a href="#section-{{loop.index + 1}}">
+                <a class='test-button links-next' href="#section-{{loop.index + 1}}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
                 </a>
             </div>
