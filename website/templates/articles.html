@@ -2,19 +2,24 @@
 {% block headers %}
     <title>Jearn - Articles</title>
     <style>
-       .modal {
-        z-index: 1050;}
+        /* Ensure the modal-backdrop is placed below the modal */
+        .modal-backdrop {
+            z-index: 1040 !important; /* Below the modal */
+        }
 
-        .modal-dialog {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;  /* Full height of the modal */
-            margin: 0;     /* Remove default margin */
+        /* Ensure the modal itself is placed above the backdrop */
+        .modal {
+            z-index: 1050 !important; /* Above the backdrop */
+        }
+
+        /* Optional: Adjust if your page content is conflicting */
+        body.modal-open {
+            overflow: hidden; /* Prevent background scrolling */
         }
 
         .card {
-            height: 40vh; /* Adjust this height as needed */
+            height: 70vh; 
+            width: 60vw;/* Adjust this height as needed */
         }
 
         .card-title {
@@ -48,29 +53,29 @@
 <hr>
 <div class="container mt-5">
     <div class="row">
+        <!-- Loop through articles and create cards -->
         {% for article in articles %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body">
+        <div class="d-flex justify-content-center my-5">
+            <div class="card" style="width: 60vw;">
+                <div class="card-body"> 
                     <h5 class="card-title">{{ article['title'] }}</h5>
-                    {% set summary = article['text'].split()[:25] %}
+                    {% set summary = article['text'].split()[:100] %}
                     <p class="card-text">{{ summary | join(' ') }}...</p>
-                    <a href="#" class="btn btn-primary" onclick="event.preventDefault();" data-toggle="modal" data-target="#postModal{{ loop.index }}">View Post</a>                
+                    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#postModal{{ loop.index }}">View Post</a>
                 </div>
             </div>
         </div>
+    </div>
+</div>
+       
 
-  
-  <!-- Modal -->
-        <!-- Modal for each post -->
-        <div class="modal fade" id="postModal{{ loop.index }}" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <!-- Modal structure -->
+        <div class="modal fade" id="postModal{{ loop.index }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">{{ article['title'] }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                        <h5 class="modal-title" id="exampleModalLabel">{{ article['title'] }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         {% if article['media'] %}
@@ -88,12 +93,14 @@
                         {% endif %}
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary">Save changes</button>
                     </div>
                 </div>
             </div>
         </div>
         {% endfor %}
+
     </div>
     <hr>
     <div class="row">

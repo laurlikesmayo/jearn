@@ -31,7 +31,7 @@ def create_test(prompt, age, format):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": f"You are a teacher creating a test about {prompt} in {format} format. The level of the test should be for a {age} year old. "},
+            {"role": "system", "content": f"You are a teacher creating a test with the prompt: '{prompt}', in {format} format. The level of the test should be for a {age} year old. "},
             {"role": "system", "content": f"The question should only have one correct answer, not an open ended question with multiple interpretations. "},
 
             {"role": "user", "content": "Generate a list of questions. Do not list any of the answers / mcq choices. Do not include an intro or outro."},
@@ -175,7 +175,7 @@ def ddoetopic(userid, num):
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a bot which only returns direct, one-word, short answers."},
-            {"role": "user", "content": f"Recommend one specific and niche academic topic that a {age} year old should learn, which is not {previous_topics}. Examples can be, 'photosynthesis', 'cellular biology', 'object oriented programming'. "}
+            {"role": "user", "content": f"Recommend one niche, specific, and interesting topic that a {age} year old should learn, which is not {previous_topics}. Examples can be, 'photosynthesis', 'economic systems', 'quantam comoputing'. "}
         ]
         )
         return response.choices[0].message.content.strip()
@@ -232,8 +232,8 @@ def ddoearticle(topic, age, previous_article_titles):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": f"You are an expert at the topic {topic}. You are writing a super interesting blog article about your SPECIFIC EXPERIENCES/EXAMPLES with the topic {topic}"},
-            {"role": "system", "content": f"Write the article on a very nieche area of the topic {topic}, but make sure it is NOT ABOUT about {previous_article_titles}."},
+            #{"role": "system", "content": f"You are an expert at the topic {topic}. You are writing an interesting blog article about your specific experiences with the topic {topic}"},
+            {"role": "system", "content": f"Write an article on a very nieche and specific area of the topic {topic}, but make sure it is NOT ABOUT about {previous_article_titles}."},
             {"role": "user", "content": f"Generate this article for a {age} year old. After the title, put the word 'SPLITHERE'. Do NOT include any words in bold (or asteriods **)"}
         ]
     )
