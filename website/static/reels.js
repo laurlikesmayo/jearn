@@ -10,8 +10,12 @@ console.log('js working');
 
 // This function creates an <iframe> (and YouTube player) after the API code downloads.
 function onYouTubeIframeAPIReady() {
-    console.log('YouTube IFrame API ready'); // Add this log
+    console.log('YouTube IFrame API ready');
     const iframes = document.querySelectorAll('iframe');
+
+    // Clear previous players
+    players = [];
+
     if (iframes.length > 0) {
         iframes.forEach((iframe, index) => {
             players[index] = new YT.Player(iframe.id, {
@@ -19,17 +23,12 @@ function onYouTubeIframeAPIReady() {
                     'onStateChange': onPlayerStateChange
                 }
             });
-            console.log('iframe ready', iframe.id); // Add iframe ID log
+            console.log('iframe ready', iframe.id);
         });
     } else {
-        console.log('No iframes found'); // Log if no iframes found
+        console.log('No iframes found');
     }
 }
-
-
-
-
-
 
 // Listen for changes in player state
 function onPlayerStateChange(event) {
@@ -56,8 +55,9 @@ function checkInView() {
     });
 }
 
-// Add an event listener for scroll events
+// Add event listeners once
 window.addEventListener('scroll', checkInView);
-
-// Initialize the check on load
-window.addEventListener('load', checkInView);
+window.addEventListener('load', () => {
+    checkInView(); // Check on load
+    onYouTubeIframeAPIReady(); // Reinitialize players
+});

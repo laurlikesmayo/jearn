@@ -1,0 +1,12 @@
+Single-database configuration for Flask.
+
+FILES
+views.py - contains all the routes / main code
+__init__.py - initialize the database and the app
+gpt.py - contains all the gpt algorithms, for example, the algorithm behind generating DDOE Topics
+ddoecontent.py - file for scraping all the articles / reels off the internet.
+models - contains db information
+app.py - runs the app
+templates - contains all the html files
+static - contains jearn designs, css files, and js files.
+

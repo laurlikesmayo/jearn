@@ -2,6 +2,8 @@
 {% block headers %}
     <title>Jearn - Articles</title>
     <style>
+        /* Ensure the modal-backdrop is placed below the modal */
+
         .card {
             height: 70vh;
             width: 60vw; /* Adjust this width as needed */
@@ -37,11 +39,11 @@
 {% block content %}
 <h1>Articles - {{topic}}</h1>
 <hr>
-<div class="container mt-5" id="articles-container">
-    <div class="row" id="articles-row">
-        <!-- Initial articles will be loaded here -->
+<div class="container mt-5">
+    <div class="row">
+        <!-- Loop through articles and create cards -->
         {% for article in articles %}
-        <div class="col-md-12 d-flex justify-content-center my-5 article-card">
+        <div class="col-md-12 d-flex justify-content-center my-5">
             <div class="card" style="width: 60vw;">
                 <div class="card-body">
                     <h5 class="card-title">{{ article['title'] }}</h5>
@@ -83,11 +85,7 @@
             </div>
         </div>
         {% endfor %}
-        <div class="text-center mt-4">
-            <button id="loadNextButton" class="btn btn-primary">Load Next</button>
-        </div>
     </div>
-    
 </div>
 
 <hr>
@@ -118,87 +116,15 @@
 </div>
 
 <script>
-    let offset = 0; // Initialize offset for articles
-    let loading = false; // Flag to prevent multiple loads
-    const topic = "{{ topic }}"; // Get the topic from your Flask template context
+    // When the modal is shown, disable background scroll
+    $('.modal').on('show.bs.modal', function () {
+        $('body').addClass('modal-open');
+    });
 
-    // Function to append new articles to the page
-    function appendArticles(articles) {
-        const articlesContainer = document.querySelector('#articles-row'); // Ensure this matches your HTML structure
-        articles.forEach((article, index) => {
-            const card = document.createElement('div');
-            card.className = 'col-md-12 d-flex justify-content-center my-5';
-            card.innerHTML = `
-                <div class="card" style="width: 60vw;">
-                    <div class="card-body">
-                        <h5 class="card-title">${article.title}</h5>
-                        <p class="card-text">${article.text.split(' ').slice(0, 100).join(' ')}...</p>
-                        <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#postModal${index + offset + 1}">View Post</a>
-                    </div>
-                </div>
-            `;
-
-            // Add modal for each article
-            const modal = document.createElement('div');
-            modal.className = 'modal fade';
-            modal.id = `postModal${index + offset + 1}`; // Adjust modal ID
-            modal.tabIndex = -1;
-            modal.innerHTML = `
-                <div class="modal-dialog modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">${article.title}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            ${article.media ? `<img src="${article.media[0].src}" class="img-fluid" alt="${article.media[0].alt}">` : ''}
-                            <p>${article.text}</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Append card and modal to the container
-            articlesContainer.appendChild(card);
-            document.body.appendChild(modal);
-        });
-    }
-
-    // Function to load more articles
-    function loadNextArticles() {
-        if (loading) return; // Prevent multiple requests if loading is in progress
-        loading = true; // Set loading to true
-
-        fetch(`/load-articles?topic=${topic}&offset=${offset}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                appendArticles(data); // Append the new articles to the page
-                offset += data.length; // Update offset for next load
-                loading = false; // Reset loading flag
-            })
-            .catch(error => {
-                console.error('Error loading articles:', error);
-                loading = false; // Reset loading flag in case of error
-            });
-    }
-
-    // Load next articles button
-    document.getElementById('loadNextButton').addEventListener('click', loadNextArticles);
-
-    // Scroll detection logic (currently commented out)
-    // window.addEventListener('scroll', () => {
-    //     if (window.scrollY + window.innerHeight >= document.body.offsetHeight - 100) {
-    //         loadNextArticles();
-    //     }
-    // });
+    // When the modal is hidden, re-enable background scroll
+    $('.modal').on('hidden.bs.modal', function () {
+        $('body').removeClass('modal-open');
+    });
 </script>
 
 {% endblock %}
