@@ -32,7 +32,7 @@ def create_test(prompt, age, format):
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": f"You are a teacher creating a test with the prompt: '{prompt}', in {format} format. The level of the test should be for a {age} year old. "},
-            {"role": "system", "content": f"The question should only have one correct answer, not an open ended question with multiple interpretations. "},
+            {"role": "system", "content": f" The question should not be open ended and should only have one single correct answer."},
 
             {"role": "user", "content": "Generate a list of questions. Do not list any of the answers / mcq choices. Do not include an intro or outro."},
         ]
