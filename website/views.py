@@ -151,13 +151,13 @@ def test():
                 try:
                     if "option" in choices[i][j].lower():
                         flash('An error has occured. Please try again.')
-                        return redirect(url_for('create_test'))
+                        return redirect(url_for('views.create_test'))
                     
                 except:
                     pass
             if "a)" in questions[i].lower():
                 flash("An error has occured. Please try again.")
-                return redirect(url_for('create_test'))
+                return redirect(url_for('views.create_test'))
             
 
         session['gptans'] = gptans
