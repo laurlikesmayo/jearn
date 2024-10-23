@@ -365,8 +365,11 @@ def fetch_next(topic, offset=0, decide = random.choice([True, False])):
     print(topic_keywords)
 
     # Fetch blog articles
+    # Fetch blog articles and ensure we convert the returned tuple to lists
     blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 1)  # Fetch 2 blog articles
-    
+    blog_titles = list(blog_titles)  # Convert tuple to list
+    blog_urls = list(blog_urls)      # Convert tuple to list
+
     # Randomly decide to either fetch a blog article or generate an AI article
     if decide and blog_titles and ddoecontent.is_embeddable(blog_urls[0]):
         blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[0])
@@ -378,6 +381,7 @@ def fetch_next(topic, offset=0, decide = random.choice([True, False])):
         })
         blog_titles.pop(0)  # Remove the title and URL that was used
         blog_urls.pop(0)
+
     else:
         # Generate an AI article
         ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)

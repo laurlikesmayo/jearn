@@ -3,29 +3,66 @@
 {% block headers %}
     <title>Jearn - Articles</title>
     <style>
-        .modal-dialog.modal-dialog-scrollable {
-            max-width: 90vw; /* 90% of the viewport width */
-            height: 100vh; /* 90% of the viewport height */
-            margin: 5vh auto; /* center the modal vertically */
-        }
-        .embed-responsive {
-            height: 100%;
-            width: 100%;
+        .card {
+            height: 70vh;
+            width: 60vw;
         }
 
-        .embed-responsive iframe {
-            height: 100%;
-            width: 100%;
-            border: none;
+        .card-title {
+            font-size: 1.25rem;
+            height: 3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .card-text {
+            height: 4.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
     </style>
 {% endblock %}
 
 {% block content %}
 
+    <!-- Button trigger modal -->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        Launch demo modal
+    </button>
+    
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            ...
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+        </div>
+    </div>
 
 
-    <h1>Articles - {{ topic }}</h1>
+    <!-- <h1>Articles - {{ topic }}</h1>
     <hr>
     <div class="container mt-5" id="articles-container">
         <div class="row" id="articles-row">
@@ -53,13 +90,7 @@
                                         <img src="{{ article.media[0].src }}" class="mr-3" alt="{{ article.media[0].alt }}">
                                     </div>
                                 {% endif %}
-                                {% if article['url'] %}
-                                <div class="embed-responsive embed-responsive-16by9">
-                                    <iframe class="embed-responsive-item" src="{{ article['url'] }}" allowfullscreen></iframe>
-                                </div>
-                                {% else %}
-                                <p>{{ article['text'] }}</p>
-                                {% endif %}
+                                <p>{{ article.text }}</p>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -98,10 +129,10 @@
                 </div>
             </div>
         </section>
-    </div>
+    </div> -->
 
 
-<script>
+<!-- <script>
     let offset = 0; // Initialize offset for articles
     let loading = false; // Flag to prevent multiple loads
     const topic = "{{ topic }}"; // Get the topic from your Flask template context
@@ -128,30 +159,18 @@
             modal.id = `postModal${index + offset + 1}`; // Adjust modal ID
             modal.tabIndex = -1;
             modal.innerHTML = `
-                <div class="modal fade" id="postModal${index}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="exampleModalLabel">${article.title}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                ${article.media && article.media.length > 0 ? `
-                                    <div class="media">
-                                        <img src="${article.media[0].src}" class="mr-3 img-fluid" alt="${article.media[0].alt}">
-                                    </div>
-                                ` : ''}
-                                ${article.url ? `
-                                    <div class="embed-responsive embed-responsive-16by9">
-                                        <iframe class="embed-responsive-item" src="${article.url}" allowfullscreen></iframe>
-                                    </div>
-                                ` : `
-                                    <p>${article.text}</p>
-                                `}
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
+                <div class="modal-dialog modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">${article.title}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${article.media ? `<img src="${article.media[0].src}" class="img-fluid" alt="${article.media[0].alt}">` : ''}
+                            <p>${article.text}</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
@@ -195,6 +214,6 @@
     //         loadNextArticles();
     //     }
     // });
-</script>
+</script> -->
 
 {% endblock %}

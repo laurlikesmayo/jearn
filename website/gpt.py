@@ -43,7 +43,7 @@ def create_test(prompt, age, format):
         if format.lower() == "mcq":
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": f"Given this question '{questions[i]}', generate four answer choices. Format each choice as a letter followed by the option text, e.g., 'A. Option 1'."}]
+                messages=[{"role": "user", "content": f"Given this question '{questions[i]}', generate four answer choices - 1 correct answer and 3 incorrect answers. Format each choice as a letter followed by the option text, e.g., 'A. Option 1'."}]
             )
             Qchoice = response.choices[0].message.content.split("\n")
             choice.append(Qchoice)
