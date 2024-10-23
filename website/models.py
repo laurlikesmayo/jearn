@@ -54,7 +54,29 @@ class SavedContent(db.Model, UserMixin):
     note = db.Column(db.String(10000))
 
 
+#Caches Data Base
+class DDOECache(db.Model, UserMixin):
+    id = db.Column("id", db.Integer, primary_key=True)
+    topic_age = db.Column(db.Integer)
+    topic_name = db.Column(db.String(50))
 
+class WOTDCache(db.Model, UserMixin):
+    id=db.Column("id", db.Integer, primary_key=True)
+    word_age = db.Column(db.Integer)
+    word = db.Column(db.String(50))
+
+class DDOEReelsCache(db.Model, UserMixin):
+    id=db.Column("id", db.Integer, primary_key=True)
+    ddoe_topic = db.Column(db.String(50))
+    video_id=db.Column(db.String(10000))
+    video_title = db.Column(db.String(500))
+
+class DDOEArticlesCache(db.Model, UserMixin):
+    id=db.Column("id", db.Integer, primary_key=True)
+    ddoe_topic = db.Column(db.String(50))
+    article_title = db.Column(db.String(500))
+    article_url = db.Column(db.String(10000))
+    article_text = db.Column(db.String(10000))
 
 
 
