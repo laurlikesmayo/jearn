@@ -36,7 +36,7 @@ def create_test(prompt, age, format):
                 "content": (
                     f"You are a teacher creating a test for a {age}-year-old student on the topic: '{prompt}'. "
                     f"Provide exactly 10 questions only in JSON format. Each question should be straightforward, "
-                    "not open-ended, and should have a single, unambiguous correct answer."
+                    "not open-ended, and should have a single, unambiguous correct answer. Do not include the answer choices"
                 )
             },
             {
@@ -50,7 +50,7 @@ def create_test(prompt, age, format):
                         ]
                     }
 
-                    Only provide the 10 questions, formatted as JSON. Do not include any answers.
+                    Only provide the 10 questions, formatted as JSON. Do not include any answer options.
                 """
             }
         ]
@@ -59,8 +59,8 @@ def create_test(prompt, age, format):
     questions_data = json.loads(response)
     questions = questions_data['questions']
 
-    for question in questions:
-        questions_with_choices = {}
+    questions_with_choices = {}
+    for question in questions:   
         if format.lower() == "mcq":
             # Make a request to generate answer choices
             choices_response = client.chat.completions.create(
@@ -69,7 +69,7 @@ def create_test(prompt, age, format):
                     {
                         "role": "user",
                         "content": (
-                            f"Given this question '{questions}', generate one correct answer and three incorrect options.  "
+                            f"Given this question '{question}', generate one correct answer and three incorrect options.  "
                             "Make sure to provide just the options, no additional text or number index. Provide the answers in JSON format, and structure the response like this:\n"
                             '{"correct": "Correct Option", "incorrect": ["Incorrect Option 1", "Incorrect Option 2", "Incorrect Option 3"]}'
                         )
@@ -102,15 +102,15 @@ def create_test(prompt, age, format):
                         "role": "user",
                         "content": (
                             f"Given the question '{question}', provide the correct answer in JSON format like this: "
-                            '{{ "correct_answer": "your_answer" }}.'
-                        )
+                            '{ "correct_answer": "your_answer" }.'
+                        ) 
                     }
                 ]
             )
             written_answers_content = written_answer_response.choices[0].message.content
             written_answers_data = json.loads(written_answers_content)
             written_answer = written_answers_data.get("correct_answer")
-
+            print(written_answer)
             questions_with_choices[f"{question}"] = {
                 "correct_answer": written_answer
             }
@@ -128,7 +128,8 @@ def checktest(questionsanswers, formats, questions, questions_with_choices=None)
                 questionsanswers[question]['is_correct'] = 0
     else:
         for question in questions:
-            user_answerwer = questionsanswers[question]['user_answer']
+            correct_answer = questionsanswers[question]['correct_answer'] = questions_with_choices[question]['correct_answer']
+            user_answer = questionsanswers[question]['user_answer']
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -142,7 +143,7 @@ def checktest(questionsanswers, formats, questions, questions_with_choices=None)
                     {
                         "role": "user",
                         "content": (
-                            f"Evaluate the student's answer: '{user_answerwer}' for the question: '{question}'. "
+                            f"Evaluate the student's answer: '{user_answer}' for the question: '{question}'. "
                             "If the answer is correct or reasonably accurate, respond with 1; "
                             "if it is incorrect or not sufficiently accurate, respond with 0. "
                             "Do not provide any additional explanations or comments."
@@ -150,15 +151,20 @@ def checktest(questionsanswers, formats, questions, questions_with_choices=None)
                     }
                 ]
             )
-            check = response.choices[0].message.content.strip()  # Strip any extraneous whitespace
+            check = response.choices[0].message.content.strip() 
+            print(check) # Strip any extraneous whitespace
+            if user_answer ==correct_answer:
+                check = 1
+            print( check)
             questionsanswers[question]['is_correct'] = int(check)
 
 
     return questionsanswers
 
 def testsandw(questionanswers, userid, topic):
-
+    print(questionanswers)
     correct_count = sum(1 for question in questionanswers if questionanswers[question]['is_correct'] == 1)
+
 
     score = (correct_count / len(questionanswers))
     print(score)
@@ -362,4 +368,3 @@ def ddoedefinition(word):
 
 
 
-print(ddoearticle("strawberries", 18, "strawberry shortcake, strawberry smoothie , strawberry ice cream"))

@@ -11,24 +11,23 @@
         <div class="row">
             {% set i = 0 %}
             {% for question in questionanswers %}
-                {% set i = i + 1 %}
                 <div class="col-md-6 mb-4">
                     <div class="card">
                         <div class="card-header">
-                            Question {{i}}
+                            Question {{loop.index}}
                         </div>
                         <div class="card-body">
                             <h5 class="card-title">{{ question }}</h5>
-                            {% if questionanswers[question][user_answer] == 1 %}
+                            {% if questionanswers[question]['is_correct'] == 1 %}
                                 <div class="alert alert-success" role="alert">
                                     Your answer is correct!
                                 </div>
-                                <p class="card-text">Correct Answer: <strong>{{ correctans[i][1] }}</strong></p>
-                            {% elif questionanswers[question][user_answer] == 0 %}
+                                <p class="card-text">Correct Answer: <strong>{{questionanswers[question]['correct_answer']}}</strong></p>
+                            {% elif questionanswers[question]['is_correct'] == 0 %}
                                 <div class="alert alert-danger" role="alert">
                                     Sorry, your answer is wrong.
                                 </div>
-                                <p class="card-text">The correct answer was: <strong>"{{ questionanswer[question][correct_answer] }}"</strong></p>
+                                <p class="card-text"> The correct answer was: <strong> {{questionanswers[question]['correct_answer']}}</strong></p>
                             {% endif %}
                         </div>
                     </div>

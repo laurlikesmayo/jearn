@@ -129,36 +129,36 @@ def create_test():
 @login_required
 @views.route("/test", methods=['GET', 'POST'])
 def test():
-    if(request.method == "POST"):
+    if request.method == "POST":
         questionanswers = {}
-        try:
-            questions_list = list(session.get('questionswc').keys())
+        questions_list = session.get('questions_list')
 
-        except:
-            questions_list = session.get('questionswc')
-        session['questions_list']= questions_list
         for i in range(len(questions_list)):
             answer = request.form.get(f'answer{i}')
-            questionanswers[questions_list[i]]['user_answer'] = answer
+            questionanswers[questions_list[i]] = {
+                'user_answer': answer,
+            }
+
         session['questionanswers'] = questionanswers
         return redirect(url_for("views.checktest"))
     else: 
-        #fetching all the parametres         
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         age = userpref.age
         prompt = request.args.get('prompt')
+
         if prompt == 'random':
             prompt = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+
         formats = request.args.get('formats')
-        
-        #generating the dictionary of questions and potential answers if it is an mcq
         questionswc = gpt.create_test(prompt, age, formats)
 
-        # session['gptans'] = gptans
         session['format'] = formats
         session['questionswc'] = questionswc
-        session['testtopic'] = prompt #CHECK ACCURACY OF THIS LINE IN THE FUTURE (WILL IGNORE FOR ABSTRACTION PURPOSES RIGHT NOW)
-        return render_template('test.html', questionswc=questionswc)
+        session['questions_list'] = list(questionswc.keys())  # Store the keys for consistent indexing
+        session['testtopic'] = prompt
+
+        return render_template('test.html', questionswc=questionswc, formats=formats)
+
     
 
 
@@ -174,7 +174,7 @@ def checktest():
     topic = session.get("testtopic").split(" ")[0].strip().lower() #CHECK ACCURACY OF THIS LINE IN THE FUTURE (WILL IGNORE FOR ABSTRACTION PURPOSES RIGHT NOW)
     
     questionanswers = gpt.checktest(questionanswers, formats, questions_list, questionswc)
-    score = gpt.testsandw(questionswc, current_user.id, topic)
+    score = gpt.testsandw(questionanswers, current_user.id, topic)
 
     return render_template('check_test.html', score = score, questionanswers = questionanswers, questions_list = questions_list)
 
