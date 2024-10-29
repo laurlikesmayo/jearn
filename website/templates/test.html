@@ -7,23 +7,23 @@
 {% block content %}
 <div class="container mt-5">
     <form method="POST">
-        {% for i in range(questions | length) %}
+        {% set i = 0 %}
+        {% for question in questionswc %}
             <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">Question {{ i+1 }}</h5>
-                    <p class="card-text">{{ questions[i] }}</p>
+                    <h5 class="card-title">{{i+1}}. </h5>
+                    <p class="card-text">{{ question }}</p>
                     
                     {% if formats.lower() == "mcq" %}
                         <input type="hidden" id="answer{{ i }}" name="answer{{ i }}" value="">
-                        <div class="btn-group-vertical" role="group" aria-label="Question {{ i+1 }} choices">
-                            {% for j in range(choices[i] | length) %}
-                                {% if choices[i][j] not in [" ", ""] %}
-                                    <button type="button" class="test-button button btn btn-outline-primary mb-2" 
-                                            id="choice{{ i }}{{ j }}"
-                                            onclick="setAnswer({{ i }}, '{{ choices[i][j] }}', {{j}})">
-                                        {{ choices[i][j] }}
-                                    </button>
-                                {% endif %}
+                        <div class="btn-group-vertical" role="group" aria-label="Question {{ i + 1 }} choices">
+                            {% set choices = questionswc[question]['choices'] %}
+                            {% for j in range(0, 4) %}
+                                <button type="button" class="test-button button btn btn-outline-primary mb-2" 
+                                        id="choice{{i}}"
+                                        onclick="setAnswer({{i}}, '{{ choices[j] }}', {{j}})">
+                                    {{j}}. {{ choices[j] }}
+                                </button>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -31,6 +31,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% set i = i + 1 %}
         {% endfor %}
         <div class="text-center">
             <button type="submit" class="test-button btn btn-success btn-lg">Submit</button>

@@ -130,55 +130,53 @@ def create_test():
 @views.route("/test", methods=['GET', 'POST'])
 def test():
     if(request.method == "POST"):
-        userans = []
-        for i in range(len(session.get('questions'))):
+        questionanswers = {}
+        try:
+            questions_list = list(session.get('questionswc').keys())
+
+        except:
+            questions_list = session.get('questionswc')
+        session['questions_list']= questions_list
+        for i in range(len(questions_list)):
             answer = request.form.get(f'answer{i}')
-            userans.append(answer)
-        session['userans'] = userans
+            questionanswers[questions_list[i]]['user_answer'] = answer
+        session['questionanswers'] = questionanswers
         return redirect(url_for("views.checktest"))
-    else:          
+    else: 
+        #fetching all the parametres         
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         age = userpref.age
         prompt = request.args.get('prompt')
         if prompt == 'random':
             prompt = gpt.ddoetopic(current_user.id, random.randint(0, 3))
         formats = request.args.get('formats')
+        
+        #generating the dictionary of questions and potential answers if it is an mcq
+        questionswc = gpt.create_test(prompt, age, formats)
 
-        questions, choices, gptans = gpt.create_test(prompt, age, formats)
-        questions = [item for item in questions if item.strip()]
-        for i in range(0, len(questions)):
-            for j in range(0, i):
-                try:
-                    if "option" in choices[i][j].lower():
-                        flash('An error has occured. Please try again.')
-                        return redirect(url_for('views.create_test'))
-                    
-                except:
-                    pass
-            if "a)" in questions[i].lower():
-                flash("An error has occured. Please try again.")
-                return redirect(url_for('views.create_test'))
-            
-
-        session['gptans'] = gptans
+        # session['gptans'] = gptans
         session['format'] = formats
-        session['questions'] = questions
-        session['testtopic'] = prompt
-        return render_template('test.html', questions=questions, choices = choices, formats = formats)
+        session['questionswc'] = questionswc
+        session['testtopic'] = prompt #CHECK ACCURACY OF THIS LINE IN THE FUTURE (WILL IGNORE FOR ABSTRACTION PURPOSES RIGHT NOW)
+        return render_template('test.html', questionswc=questionswc)
     
 
 
 @login_required
 @views.route("/checktest", methods=['GET', 'POST'])
 def checktest():
-    questions = session.get("questions")
-    userans = session.get("userans")
-    gptans = session.get("gptans")
+    questionanswers = session.get('questionanswers') #question answers only having user_ans
+    questionswc = session.get('questionswc')
     formats = session.get("format")
-    topic = session.get("testtopic").split(" ")[0].strip().lower()
-    correctans = gpt.checktest(userans, gptans, formats, questions)
-    score = gpt.testsandw(correctans, current_user.id, topic)
-    return render_template('check_test.html', score = score, correctans = correctans, questions=questions)
+    questions_list = session.get('questions_list')
+    
+    #topic for S and W
+    topic = session.get("testtopic").split(" ")[0].strip().lower() #CHECK ACCURACY OF THIS LINE IN THE FUTURE (WILL IGNORE FOR ABSTRACTION PURPOSES RIGHT NOW)
+    
+    questionanswers = gpt.checktest(questionanswers, formats, questions_list, questionswc)
+    score = gpt.testsandw(questionswc, current_user.id, topic)
+
+    return render_template('check_test.html', score = score, questionanswers = questionanswers, questions_list = questions_list)
 
 @login_required
 @views.route("/checksandw", methods=['GET', 'POST'])
