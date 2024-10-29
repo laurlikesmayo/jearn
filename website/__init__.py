@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from os import path
+from flask_caching import Cache
 from sqlalchemy import MetaData
 convention={
     "ix": 'ix_%(column_0_label)s',
@@ -21,6 +22,13 @@ app.config['SECRET_KEY'] = 'hello'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['CACHE_TYPE'] = 'RedisCache'
+app.config['CACHE_REDIS_HOST'] = 'localhost'
+app.config['CACHE_REDIS_PORT'] = 6379
+app.config['CACHE_DEFAULT_TIMEOUT'] = 0  # Cache timeout (in seconds)
+
+# Initialize the cache
+cache = Cache(app)
 
 # Initialize extensions
 metadata = MetaData(naming_convention =convention)

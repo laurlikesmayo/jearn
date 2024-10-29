@@ -17,4 +17,6 @@ SQLAlchemy
 Werkzeug
 WTForms
 mysql-connector-python
+Flask-Caching redis
+homebrew
 

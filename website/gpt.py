@@ -325,6 +325,7 @@ def ddoearticle(topic, age, previous_article_titles):
             ]        
     )
     response = response.choices[0].message.content
+    response = json.loads(response)
     return response
 
 
