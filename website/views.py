@@ -390,49 +390,7 @@ def fetch_next(topic, offset=0, decide = random.choice([True, False])):
 
     # Return the articles based on the offset
     return article_list[offset:offset + 1]
-def find_articles(topic):
-    userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-    #the articles which are shown change everytime this page is reloaded
-    article_list = []
-    news_list = []
-    ai_article_titles=['poop'] #To make sure chatgpt doesnt write repetitive articles.
-    blog_list = [] 
-    topic_keywords = gpt.keywords(topic) 
-    print(topic_keywords)   
-    news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
-    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 10)
-    for i in range(0, 5):
-        ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
-        try:
-            if ai_article[1] is None or len(ai_article[1]) < 25:
-                continue
-            else:
-                ai_article_titles.append(ai_article[0])
-                article_list.append({'title': ai_article[0], 'text': ai_article[1]})
-        except:
-            continue
-        
-    try:
-        for i in range(len(news_titles)): #Adding News Articles to 'article_list'
-            if ddoecontent.is_embeddable(news_urls[i]):
-                news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-                news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-                article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-    except:
-        pass
-    try:
-        for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
-            if ddoecontent.is_embeddable(blog_urls[i]):
-                blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-                blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-                article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-    except:
-        pass
-        
-    #MIGHT CHANGE IN THE FUTURE
-    random.shuffle(article_list)
 
-    return article_list, news_list, blog_list
 
 @login_required
 @app.route('/save_note', methods=['POST'])

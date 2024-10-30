@@ -2,42 +2,212 @@ import json
 import uuid
 from flask import jsonify
 from . import gpt, ddoecontent, cache
+from .models import UserPreferences
+from flask_login import current_user
+import random
+import uuid
+from flask import jsonify
+from . import cache
 
-def cache_articles(topic, age, previous_article_titles = ""):
-    #Add a code about retrieving / storing the previous article titles
-    article = gpt.ddoearticle(topic, age, previous_article_titles)
-    unique_id = str(uuid.uuid4())
-    title = article["title"]
-    content = article["content"]
-    cache_key = f'articles:{unique_id}'
-    cache.set(cache_key, {
-        "topic": topic,
-        "age": age,
-        "title": title,
-        "content": content
-    })
+'''
+IMPORTANT NOTE 
+THERE ARE MANY FACTORS I DID NOT TAKE INTO ACCOUNT WHICH CAN AFFECT USER EXPERIENCE
 
-    #The topic cache maintains a list of unique IDs associated with each topic. This allows you to retrieve all articles under a specific topic easily.
-    topic_key = f'articles:topic:{topic}'
-    cached_ids = cache.get(topic_key) or []
-    if unique_id not in cached_ids:
-        cached_ids.append(unique_id)
-        cache.set(topic_key, cached_ids)
+- TRACKING ARTICLES THAT THE USER HAS ALREADY SEEN
+- TOPIC SPECIFIC CACHING GROWTH - TOO MANY ARTICLES UNDER THE SAME TOPIC CAN AFFECT MEMORY AND SPEED
+    - Set cache to only store the 'latest 50 articles'
+    - Set cache articles to have an expiration date
+    - Manual clearing of expired articles
+- FETCH CACHED ARTICLES BASED ON TOPIC AND AGE
 
-    return jsonify({"message": "Article cached successfully!", "id": unique_id}), 201
+'''
 
-def articles_from_cache(topic):
-    topic_key = f'articles:topic:{topic}'
-    unique_ids = cache.get(topic_key)
+def cache_articles(article_list):
+    for article in article_list:
+        topic = article.get("topic")
+        # Generate a unique ID for each article
+        unique_id = str(uuid.uuid4())
+        
+        # Prepare cache key for the article and structure data
+        cache_key = f'articles:{unique_id}'
+        cache_data = {
+            "topic": article.get("topic"),
+            "age": article.get("age"),
+            "title": article.get("title"),
+            "content": article.get("content"),
+            "url": article.get("url"),
+            "media": article.get("media")
+        }
+        
+        # Store the individual article in the cache
+        cache.set(cache_key, cache_data)
+
+        # Update the topic-specific cache list with this unique ID
+        topic_key = f'articles:topic:{topic}'
+        cached_ids = cache.get(topic_key) or []
+        
+        if unique_id not in cached_ids:
+            cached_ids.append(unique_id)
+            cache.set(topic_key, cached_ids)
+
+    return jsonify({"message": "Articles cached successfully!", "count": len(article_list)}), 201
+
+
+def get_cached_articles(topic, min_count=10):
+    # Key for topic-specific articles list
+    topic_key = f'articles:topic:{topic}:ids'
+    unique_ids = cache.get(topic_key) or []
     
-    if not unique_ids:
-        #Add code about having to generate from API key, or go back to fetch_articles function
-        return jsonify({"message": "No articles found for this topic."}), 404
+    # Retrieve cached articles based on stored IDs
+    all_articles = [cache.get(f'articles:{unique_id}') for unique_id in unique_ids if cache.get(f'articles:{unique_id}')]
+
+    # If we don't have enough cached articles, generate more and cache them
+    if len(all_articles) < min_count:
+        # Fetch/generate new articles for the topic
+        new_articles = find_articles(topic)
+        
+        # Cache the new articles
+        cached_new_ids = cache_articles(new_articles, topic)
+
+        # Update the list of all articles to include the new ones
+        all_articles.extend(new_articles)
+
+    return all_articles
+
+
+#Generates/Scrapes 5 articles
+def find_articles(topic):
+    userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
+    age = userpref.age if userpref else 10  # Default age if no user preference is found
     
-    articles = []
-    for unique_id in unique_ids:
-        article = cache.get(f'articles:{unique_id}')
-        if article:
-            articles.append(article)
+    article_list = []
+    previous_ai_articles = []  # Prevent duplicate AI-generated titles
+    topic_keywords = gpt.keywords(topic)
     
-    return jsonify(articles), 200
+    # Fetch news and blog article details based on topic keywords
+    news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 5)
+    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 5)
+
+    # Generate AI articles
+    for _ in range(5):
+        ai_article = gpt.ddoearticle(topic, age, previous_ai_articles)
+        if 'title' in ai_article and 'content' in ai_article:
+            previous_ai_articles.append(ai_article['title'])
+            article_list.append({
+                'title': ai_article['title'],
+                'content': ai_article['content'],
+                'topic': topic,
+                'age': age
+            })
+
+    # Adding News Articles
+    try:
+        for i in range(len(news_titles)):
+            if ddoecontent.is_embeddable(news_urls[i]):
+                news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
+                article_list.append({
+                    'title': news_titles[i],
+                    'url': news_urls[i],
+                    'content': news_text,
+                    'media': news_media,
+                    'topic': topic,
+                    'age': age
+                })
+    except Exception as e:
+        print(f"Error fetching news articles: {e}")
+
+    # Adding Blog Articles
+    try:
+        for i in range(len(blog_titles)):
+            if ddoecontent.is_embeddable(blog_urls[i]):
+                blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
+                article_list.append({
+                    'title': blog_titles[i],
+                    'url': blog_urls[i],
+                    'content': blog_text,
+                    'media': blog_media,
+                    'topic': topic,
+                    'age': age
+                })
+    except Exception as e:
+        print(f"Error fetching blog articles: {e}")
+
+    # Optional: randomize order for varied display
+    # random.shuffle(article_list)
+
+    return article_list
+
+
+#REELS
+
+def cache_youtube_shorts(reels, topic):
+    cached_ids = cache.get(f'shorts:topic:{topic}:ids') or []
+    for reel in reels:
+        video_id = reel['video_id']
+        
+        # Cache each unique reel individually
+        if video_id not in cached_ids:
+            cache_key = f'shorts:{video_id}'
+            cache.set(cache_key, reel)  # Store the reel
+            
+            # Update topic-specific ID list
+            cached_ids.append(video_id)
+            cache.set(f'shorts:topic:{topic}:ids', cached_ids)
+
+    return {"message": f"{len(reels)} shorts cached successfully!", "new_cached_count": len(reels)}
+
+def get_cached_shorts(topic, min_count=10, query='shorts'):
+    cached_ids_key = f'shorts:topic:{topic}:ids'
+    cached_ids = cache.get(cached_ids_key) or []
+    reels = [cache.get(f'shorts:{vid_id}') for vid_id in cached_ids if cache.get(f'shorts:{vid_id}')]
+
+    # Check if we have enough cached reels; fetch more if needed
+    if len(reels) < min_count:
+        new_reels, _ = ddoecontent.fetch_youtube_shorts(query=query, cached_ids=cached_ids, page_size=min_count - len(reels))
+        
+        if new_reels:
+            cache_youtube_shorts(new_reels, topic)
+            reels.extend(new_reels)
+
+    return reels
+
+
+
+def cache_topics(topic, age):
+    # Create a cache key based on the topic and age
+    cache_key = f'topics:{topic}:age:{age}'
+    
+    # Check if the topic already exists for the specified age
+    if cache.get(cache_key):
+        return {"message": f"The topic '{topic}' for age {age} already exists in the cache."}
+    
+    # Store the topic with a unique ID
+    unique_id = str(uuid.uuid4())  # Generate a unique ID for this entry
+    cache.set(cache_key, unique_id)  # Store the unique ID for the topic and age
+    
+    # Update the list of cached IDs for this age group
+
+    #searches for cached id's based on the age.
+    cached_ids = cache.get(f'topics:age:{age}:ids') or []
+    cached_ids.append(unique_id)
+    cache.set(f'topics:age:{age}:ids', cached_ids)
+
+    return {"message": f"{topic} topic cached successfully for age {age}!", "new_cached_count": 1}
+
+def get_cached_topic(age, used_topics):
+    # Get the list of cached IDs for the specified age
+    cached_ids = cache.get(f'topics:age:{age}:ids') or []
+
+    # Retrieve cached topics based on IDs
+    for unique_id in cached_ids:
+        topic = cache.get(f'topics:{unique_id}')  # Get the topic based on the unique ID
+        if topic and topic not in used_topics:
+            return topic  # Return the first new topic found
+
+    # If no new cached topic exists, fetch a new topic using gpt.ddoetopics
+    new_topic = gpt.ddoetopic(current_user.id)  # Adjust this function call as needed
+    
+    # Optionally cache the new topic
+    cache_topics(new_topic, age)  # Cache the new topic for the specified age
+    
+    return new_topic  # Return the newly generated topic

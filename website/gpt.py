@@ -210,44 +210,36 @@ def weakrec(userid):
     return response.choices[0].message.content.strip()
 
 
-def ddoetopic(userid, num):
+def ddoetopic(userid):
     userpref = UserPreferences.query.filter_by(user_id=userid).first()
     previous_topics = []
     ddoe = DDOE.query.filter_by(user_id=userid).first()
     if ddoe:
         previous_topics = ddoe.previous_topics
-    strengths = userpref.strengths
     age = userpref.age
-    
-    weaknesses= userpref.weaknesses
-    #0 = learn new, 1 = revise, 2 = continue off strength
-    if num==1 and strengths:
-        response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a bot which only returns direct, short answers to what is asked."},
-            {"role": "user", "content": f"A {age} year old user is interested in {strengths}. Return one specific and niche topic that they should learn."}
-        ]
-        )
-        return response.choices[0].message.content.strip()
-    elif num == 2 and weaknesses:
-        response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a bot which only returns direct, short answers to what is asked.."},
-            {"role": "user", "content": f"pick a random topic from {weaknesses}"}
-        ]
-        )
-        return response.choices[0].message.content.strip()
-    else:
-        response = client.chat.completions.create(
+
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a bot which only returns direct, one-word, short answers."},
-            {"role": "user", "content": f"Recommend one niche, specific, and interesting topic that a {age} year old should learn, which is not {previous_topics}. Examples can be, 'photosynthesis', 'economic systems', 'quantam comoputing'. "}
+            {"role": "user", "content": (
+                f"Recommend one niche, specific, and interesting topic that a {age} year old should learn, "
+                f"which is not {previous_topics}. \n\n"
+                "Please respond in JSON format, like this:\n"
+                "{'topic': 'your_topic_here'}.\n\n"
+                "Examples can be:\n"
+                "- 'photosynthesis'\n"
+                "- 'economic systems'\n"
+                "- 'quantum computing'."
+            )}
         ]
-        )
-        return response.choices[0].message.content.strip()
+    )
+    
+    # Extract the JSON string and convert it to a Python dictionary
+    json_response = response.choices[0].message.content.strip()
+    topic = json.looads(json_response)['topic']
+    
+    return topic
         
 
 def ddoedescription(userid, topic):

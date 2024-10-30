@@ -55,7 +55,8 @@ def fetch_blog_articles(query, page_size=25, exclude_domains=['removed.com', 'pl
 
 import requests
 
-def fetch_youtubeshorts(query, page_size=10, duration='short', page_token=None):
+
+def fetch_youtube_shorts(query, cached_ids=None, page_size=10, duration='short', page_token=None):
     all_reels = []
     api_key = google_api  # Replace with your API key
     search_url = 'https://www.googleapis.com/youtube/v3/search'
@@ -78,8 +79,8 @@ def fetch_youtubeshorts(query, page_size=10, duration='short', page_token=None):
     
     if response.status_code == 200:
         results = response.json()
-        video_ids = [item['id']['videoId'] for item in results['items']]
-        
+        video_ids = [item['id']['videoId'] for item in results['items'] if item['id']['videoId'] not in cached_ids]
+
         # Get video details to filter out unavailable videos
         video_params = {
             'part': 'status',
@@ -92,18 +93,19 @@ def fetch_youtubeshorts(query, page_size=10, duration='short', page_token=None):
             video_results = video_response.json()
             for item in video_results['items']:
                 video_id = item['id']
-                title = next((video['snippet']['title'] for video in results['items'] if video['id']['videoId'] == video_id), 'Unknown Title')
                 
                 # Check if the video is public and embeddable
                 if item['status']['privacyStatus'] == 'public' and item['status'].get('embeddable', False):
+                    title = next((video['snippet']['title'] for video in results['items'] if video['id']['videoId'] == video_id), 'Unknown Title')
                     all_reels.append({'title': title, 'url': f'https://www.youtube.com/watch?v={video_id}', 'video_id': video_id})
 
-        # Get the next page token
+        # Return reels and the next page token for further fetching if needed
         next_page_token = results.get('nextPageToken')
         return all_reels, next_page_token
     else:
         print(f"Error: {response.status_code}")
         return [], None
+
 
 
     
