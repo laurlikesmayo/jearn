@@ -288,7 +288,8 @@ def articles():
         topic = session.get('ddoetopic') 
     else:
         return redirect(url_for('views.home'))
-    articles = fetch_next(topic, decide=True)
+
+    articles = cache.get_cached_articles(topic)
     return render_template('articles.html', articles = articles, topic=topic)
     # news=news_list, blogs = blog_list,
 

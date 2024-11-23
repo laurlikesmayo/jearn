@@ -1,13 +1,11 @@
 import json
 import uuid
 from flask import jsonify
-from . import gpt, ddoecontent, cache
+from . import gpt, cache, ddoecontent
 from .models import UserPreferences
 from flask_login import current_user
 import random
 import uuid
-from flask import jsonify
-from . import cache
 
 '''
 IMPORTANT NOTE 
@@ -64,11 +62,9 @@ def get_cached_articles(topic, min_count=10):
     # If we don't have enough cached articles, generate more and cache them
     if len(all_articles) < min_count:
         # Fetch/generate new articles for the topic
-        new_articles = find_articles(topic)
-        
+        new_articles = find_articles(topic, length = min_count - len(all_articles))
         # Cache the new articles
         cached_new_ids = cache_articles(new_articles, topic)
-
         # Update the list of all articles to include the new ones
         all_articles.extend(new_articles)
 
@@ -76,20 +72,20 @@ def get_cached_articles(topic, min_count=10):
 
 
 #Generates/Scrapes 5 articles
-def find_articles(topic):
+def find_articles(topic, length=1):
     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-    age = userpref.age if userpref else 10  # Default age if no user preference is found
+    age = userpref.age if userpref else 17  # Default age if no user preference is found
     
     article_list = []
     previous_ai_articles = []  # Prevent duplicate AI-generated titles
     topic_keywords = gpt.keywords(topic)
     
     # Fetch news and blog article details based on topic keywords
-    news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 5)
-    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 5)
+    news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, length)
+    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, length)
 
     # Generate AI articles
-    for _ in range(5):
+    for _ in range(length):
         ai_article = gpt.ddoearticle(topic, age, previous_ai_articles)
         if 'title' in ai_article and 'content' in ai_article:
             previous_ai_articles.append(ai_article['title'])
