@@ -149,7 +149,7 @@ def test():
         prompt = request.args.get('prompt')
 
         if prompt == 'random':
-            prompt = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+            prompt = gpt.ddoetopic(current_user.id)
 
         formats = request.args.get('formats')
         questionswc = gpt.create_test(prompt, age, formats)
@@ -208,7 +208,7 @@ def home():
         db.session.commit()
 
     if not ddoe:
-        topic = gpt.ddoetopic(current_user.id, 0)
+        topic = gpt.ddoetopic(current_user.id)
         description = gpt.ddoedescription(current_user.id, topic)
         examples = gpt.ddoeexamples(current_user.id, topic)
         word = gpt.ddoeword(current_user.id)
@@ -237,7 +237,7 @@ def home():
         
         num = random.randint(0, 3)
     
-        ddoe.topic = gpt.ddoetopic(current_user.id, num)
+        ddoe.topic = gpt.ddoetopic(current_user.id)
         ddoe.description = gpt.ddoedescription(current_user.id, ddoe.topic)
         ddoe.examples = gpt.ddoeexamples(current_user.id, ddoe.topic)
         ddoe.word = gpt.ddoeword(current_user.id)
@@ -283,7 +283,7 @@ def articles():
     if request.method == 'POST':
         topic = request.form.get('topic')
         if topic == 'recommend':
-            topic = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+            topic = gpt.ddoetopic(current_user.id)
     elif 'ddoetopic' in session:
         topic = session.get('ddoetopic') 
     else:
@@ -301,7 +301,7 @@ def reels():
     if request.method == 'POST':
         topic = request.form.get('topic')
         if topic == 'recommend':
-            topic = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+            topic = gpt.ddoetopic(current_user.id)
         previous_topic = session.get('reels_previous_topic', '')
         
         if topic != previous_topic:
@@ -330,15 +330,6 @@ def reels():
 
     return render_template('reels.html', reels_list=reels_list, topic=topic)
 
-@login_required
-@views.route('/testing')
-def randomx():
-    ddoe = DDOE.query.filter_by(user_id = current_user.id).first()
-    for i in range(0, 10):
-        print(gpt.ddoetopic(current_user.id, 0))
-        print(ddoe.previous_topics)
-        print(gpt.ddoeword(current_user.id))
-    return render_template('index.html')
 
 @login_required
 @views.route("/account")
