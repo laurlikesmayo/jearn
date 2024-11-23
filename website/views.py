@@ -5,8 +5,10 @@ from .models import Users, UserPreferences, DDOE, SavedContent
 from sqlalchemy.orm.attributes import flag_modified
 import random
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
-from . import gpt, ddoecontent
+from . import gpt, ddoecontent, cache
 import json
+import uuid
+
 
 from . import app, db
 views = Blueprint("views", __name__)
@@ -129,56 +131,54 @@ def create_test():
 @login_required
 @views.route("/test", methods=['GET', 'POST'])
 def test():
-    if(request.method == "POST"):
-        userans = []
-        for i in range(len(session.get('questions'))):
+    if request.method == "POST":
+        questionanswers = {}
+        questions_list = session.get('questions_list')
+
+        for i in range(len(questions_list)):
             answer = request.form.get(f'answer{i}')
-            userans.append(answer)
-        session['userans'] = userans
+            questionanswers[questions_list[i]] = {
+                'user_answer': answer,
+            }
+
+        session['questionanswers'] = questionanswers
         return redirect(url_for("views.checktest"))
-    else:          
+    else: 
         userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
         age = userpref.age
         prompt = request.args.get('prompt')
+
         if prompt == 'random':
             prompt = gpt.ddoetopic(current_user.id, random.randint(0, 3))
+
         formats = request.args.get('formats')
+        questionswc = gpt.create_test(prompt, age, formats)
 
-        questions, choices, gptans = gpt.create_test(prompt, age, formats)
-        questions = [item for item in questions if item.strip()]
-        for i in range(0, len(questions)):
-            for j in range(0, i):
-                try:
-                    if "option" in choices[i][j].lower():
-                        flash('An error has occured. Please try again.')
-                        return redirect(url_for('views.create_test'))
-                    
-                except:
-                    pass
-            if "a)" in questions[i].lower():
-                flash("An error has occured. Please try again.")
-                return redirect(url_for('views.create_test'))
-            
-
-        session['gptans'] = gptans
         session['format'] = formats
-        session['questions'] = questions
+        session['questionswc'] = questionswc
+        session['questions_list'] = list(questionswc.keys())  # Store the keys for consistent indexing
         session['testtopic'] = prompt
-        return render_template('test.html', questions=questions, choices = choices, formats = formats)
+
+        return render_template('test.html', questionswc=questionswc, formats=formats)
+
     
 
 
 @login_required
 @views.route("/checktest", methods=['GET', 'POST'])
 def checktest():
-    questions = session.get("questions")
-    userans = session.get("userans")
-    gptans = session.get("gptans")
+    questionanswers = session.get('questionanswers') #question answers only having user_ans
+    questionswc = session.get('questionswc')
     formats = session.get("format")
-    topic = session.get("testtopic").split(" ")[0].strip().lower()
-    correctans = gpt.checktest(userans, gptans, formats, questions)
-    score = gpt.testsandw(correctans, current_user.id, topic)
-    return render_template('check_test.html', score = score, correctans = correctans, questions=questions)
+    questions_list = session.get('questions_list')
+    
+    #topic for S and W
+    topic = session.get("testtopic").split(" ")[0].strip().lower() #CHECK ACCURACY OF THIS LINE IN THE FUTURE (WILL IGNORE FOR ABSTRACTION PURPOSES RIGHT NOW)
+    
+    questionanswers = gpt.checktest(questionanswers, formats, questions_list, questionswc)
+    score = gpt.testsandw(questionanswers, current_user.id, topic)
+
+    return render_template('check_test.html', score = score, questionanswers = questionanswers, questions_list = questions_list)
 
 @login_required
 @views.route("/checksandw", methods=['GET', 'POST'])
@@ -288,7 +288,8 @@ def articles():
         topic = session.get('ddoetopic') 
     else:
         return redirect(url_for('views.home'))
-    articles = fetch_next(topic, decide=True)
+
+    articles = cache.get_cached_articles(topic)
     return render_template('articles.html', articles = articles, topic=topic)
     # news=news_list, blogs = blog_list,
 
@@ -394,49 +395,7 @@ def fetch_next(topic, offset=0, decide = random.choice([True, False])):
 
     # Return the articles based on the offset
     return article_list[offset:offset + 1]
-def find_articles(topic):
-    userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-    #the articles which are shown change everytime this page is reloaded
-    article_list = []
-    news_list = []
-    ai_article_titles=['poop'] #To make sure chatgpt doesnt write repetitive articles.
-    blog_list = [] 
-    topic_keywords = gpt.keywords(topic) 
-    print(topic_keywords)   
-    news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
-    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 10)
-    for i in range(0, 5):
-        ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
-        try:
-            if ai_article[1] is None or len(ai_article[1]) < 25:
-                continue
-            else:
-                ai_article_titles.append(ai_article[0])
-                article_list.append({'title': ai_article[0], 'text': ai_article[1]})
-        except:
-            continue
-        
-    try:
-        for i in range(len(news_titles)): #Adding News Articles to 'article_list'
-            if ddoecontent.is_embeddable(news_urls[i]):
-                news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-                news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-                article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media})
-    except:
-        pass
-    try:
-        for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
-            if ddoecontent.is_embeddable(blog_urls[i]):
-                blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-                blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-                article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media})
-    except:
-        pass
-        
-    #MIGHT CHANGE IN THE FUTURE
-    random.shuffle(article_list)
 
-    return article_list, news_list, blog_list
 
 @login_required
 @app.route('/save_note', methods=['POST'])
@@ -464,6 +423,26 @@ def see_note():
     return redirect(url_for('views.home'))
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #INACTIVE ROUTES
 
 @login_required
@@ -475,49 +454,6 @@ def navbar():
 @views.route('sidebar')
 def js():
     return render_template('sidebar.html')
-
-#OLD ARTICLES WITH AI-GENERATED SUMMARY
-# @login_required
-# @views.route("/articles")
-# def articles():
-#     userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-#     #the articles which are shown change everytime this page is reloaded
-#     article_list = []
-#     news_list = []
-#     ai_article_titles=['poop'] #To make sure chatgpt doesnt write repetitive articles.
-#     blog_list = [] 
-#     topic = session.get('ddoetopic')
-#     topic_keywords = gpt.keywords(topic) 
-#     print(topic_keywords)   
-#     news_titles, news_urls = ddoecontent.fetch_news_articles(topic_keywords, 10)
-#     blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 10)
-#     for i in range(0, 10):
-#         ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
-#         try:
-#             summary = gpt.summary(ai_article[1])
-#         except:
-#             continue
-#         ai_article_titles.append(ai_article[0])
-#         article_list.append({'title': ai_article[0], 'text': ai_article[1], 'summary': summary})
-#     for i in range(len(news_titles)): #Adding News Articles to 'article_list'
-#         news_text, news_media = ddoecontent.scrape_articles(news_urls[i])
-#         if news_text:
-#             summary = gpt.summary(news_text[:500])
-#         news_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
-#         article_list.append({'title': news_titles[i], 'url': news_urls[i], 'text': news_text, 'media': news_media, 'summary': summary})
-#     for i in range(len(blog_titles)): #Adding News Articles to 'article_list'
-#         blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[i])
-#         if blog_text:
-#             summary = gpt.summary(blog_text[:500])
-#         blog_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
-#         article_list.append({'title': blog_titles[i], 'url': blog_urls[i], 'text': blog_text, 'media': blog_media, 'summary': summary})
-    
-#     #MIGHT CHANGE IN THE FUTURE
-#     random.shuffle(article_list)
-#     print(len(article_list))
-#     # show articles as a popup.
-#     return render_template('articles.html', articles = article_list, news=news_list, blogs = blog_list)
-
 
 
 
