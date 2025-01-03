@@ -1,11 +1,14 @@
 import json
 import uuid
+from . import app, db, cache
+from .models import Users, UserPreferences, DDOE
 from flask import jsonify
-from . import gpt, cache, ddoecontent
-from .models import UserPreferences
+from . import gpt, ddoecontent
 from flask_login import current_user
 import random
 import uuid
+from dotenv import load_dotenv
+import os
 
 '''
 IMPORTANT NOTE 
@@ -20,55 +23,84 @@ THERE ARE MANY FACTORS I DID NOT TAKE INTO ACCOUNT WHICH CAN AFFECT USER EXPERIE
 
 '''
 
-def cache_articles(article_list):
+def cache_articles(article_list, topic):
+    # Prepare the topic-specific cache list key
+    topic_key = f'articles:topic:{topic}:ids'
+    
+    # Fetch existing article IDs from the cache or create a new list
+    cached_ids = cache.get(topic_key) or []
+    cached_titles = {cache.get(f'articles:{id}:title') for id in cached_ids}
+
+    
     for article in article_list:
-        topic = article.get("topic")
-        # Generate a unique ID for each article
-        unique_id = str(uuid.uuid4())
-        
-        # Prepare cache key for the article and structure data
-        cache_key = f'articles:{unique_id}'
-        cache_data = {
-            "topic": article.get("topic"),
-            "age": article.get("age"),
-            "title": article.get("title"),
-            "content": article.get("content"),
-            "url": article.get("url"),
-            "media": article.get("media")
-        }
-        
-        # Store the individual article in the cache
-        cache.set(cache_key, cache_data)
+        if article.get("title") not in cached_titles:
+            unique_id = str(uuid.uuid4())
+            
+            # Prepare cache key for the article and structure data
+            cache_key = f'articles:{unique_id}'
+            cache_data = {
+                "topic": topic,
+                "age": article.get("age"),
+                "title": article.get("title"),
+                "content": article.get("content"),
+                "url": article.get("url"),
+                "media": article.get("media")
+            }
+            
+            # Store the individual article in the cache
+            cache.set(cache_key, cache_data)
 
-        # Update the topic-specific cache list with this unique ID
-        topic_key = f'articles:topic:{topic}'
-        cached_ids = cache.get(topic_key) or []
-        
-        if unique_id not in cached_ids:
-            cached_ids.append(unique_id)
-            cache.set(topic_key, cached_ids)
+            # Update the topic-specific cache list with this unique ID
+            if unique_id not in cached_ids:
+                cached_ids.append(unique_id)
+    
+    # Store the updated list of article IDs back to the cache
+    cache.set(topic_key, cached_ids)
 
-    return jsonify({"message": "Articles cached successfully!", "count": len(article_list)}), 201
+    print("Articles cached successfully!")
+
 
 
 def get_cached_articles(topic, min_count=10):
     # Key for topic-specific articles list
     topic_key = f'articles:topic:{topic}:ids'
+    
+    # Retrieve the list of article IDs from the cache
     unique_ids = cache.get(topic_key) or []
+    if not unique_ids:
+        print("no articles cached for this topic, attempting to generate new ones")
+    
+    print(f"Retrieved article IDs for topic '{topic}': {unique_ids}")
     
     # Retrieve cached articles based on stored IDs
-    all_articles = [cache.get(f'articles:{unique_id}') for unique_id in unique_ids if cache.get(f'articles:{unique_id}')]
+    all_articles = []
+    for unique_id in unique_ids:
+        article = cache.get(f'articles:{unique_id}')
+        if article:
+            all_articles.append(article)  # Add the article to the list
 
+    print(f"Found {len(all_articles)} articles in cache for topic '{topic}'.")
     # If we don't have enough cached articles, generate more and cache them
-    if len(all_articles) < min_count:
+
+    while len(all_articles) < min_count:
         # Fetch/generate new articles for the topic
-        new_articles = find_articles(topic, length = min_count - len(all_articles))
+        new_articles = find_articles(topic, length = min_count-len(all_articles))
         # Cache the new articles
-        cached_new_ids = cache_articles(new_articles, topic)
+        cache_articles(new_articles, topic)
         # Update the list of all articles to include the new ones
         all_articles.extend(new_articles)
 
     return all_articles
+
+def cache_questions(question, topic):
+    unique_id = str(uuid.uuid4())
+    print(unique_id)
+    cache_key = f'question:{unique_id}'
+    cache_data = {
+        "topic": topic,
+        "question": question
+    }
+
 
 
 #Generates/Scrapes 5 articles
@@ -88,12 +120,12 @@ def find_articles(topic, length=1):
     for _ in range(length):
         ai_article = gpt.ddoearticle(topic, age, previous_ai_articles)
         if 'title' in ai_article and 'content' in ai_article:
-            previous_ai_articles.append(ai_article['title'])
+            previous_ai_articles.append(ai_article["title"])
             article_list.append({
-                'title': ai_article['title'],
-                'content': ai_article['content'],
-                'topic': topic,
-                'age': age
+                "title": ai_article["title"],
+                "content": ai_article["content"],
+                "topic": topic,
+                "age": age
             })
 
     # Adding News Articles

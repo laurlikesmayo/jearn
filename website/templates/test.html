@@ -8,7 +8,6 @@
 {% block content %}
 <div class="container mt-5">
     <form method="POST">
-        <p>{{ questionswc }}</p>
         {% for question in questionswc %}
             {% set outer_loop = loop %}
             
@@ -18,7 +17,7 @@
                     <p class="card-text">{{ question }}</p>
                     
                     {% if formats.lower() == "mcq" %}
-                        <input id="answer{{ outer_loop.index0 }}" name="answer{{ outer_loop.index0 }}" value="">
+                        <input type="hidden" id="answer{{ outer_loop.index0 }}" name="answer{{ outer_loop.index0 }}" value="">
                         <div class="btn-group-vertical" role="group" aria-label="Question {{ outer_loop.index0 }} choices">
                             
                             {% set choices = questionswc[question]['choices'] %}

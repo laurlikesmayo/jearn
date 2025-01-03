@@ -5,7 +5,7 @@ from .models import Users, UserPreferences, DDOE, SavedContent
 from sqlalchemy.orm.attributes import flag_modified
 import random
 from flask_login import login_user, logout_user, login_required, UserMixin, current_user
-from . import gpt, ddoecontent, cache
+from . import gpt, ddoecontent, caches
 import json
 import uuid
 
@@ -289,8 +289,8 @@ def articles():
     else:
         return redirect(url_for('views.home'))
 
-    articles = cache.get_cached_articles(topic)
-    return render_template('articles.html', articles = articles, topic=topic)
+    articles = caches.get_cached_articles(topic)
+    return render_template('articles.html', articles=articles, topic=topic)
     # news=news_list, blogs = blog_list,
 
 
@@ -312,7 +312,7 @@ def reels():
             prev_npt = session.get('reels_npt', None)
         
         # Fetch results with the current topic and page token
-        reels_list, npt = ddoecontent.fetch_youtubeshorts(topic, page_token=prev_npt,)
+        reels_list, npt = ddoecontent.fetch_youtube_shorts(topic, page_token=prev_npt,)
         
         # Update session with the current state
         session['reels_previous_topic'] = topic
@@ -321,7 +321,7 @@ def reels():
     elif 'ddoetopic' in session:
         topic = session.get('ddoetopic') 
         npt = session.get('reels_npt', None)
-        reels_list, npt = ddoecontent.fetch_youtubeshorts(topic, page_token=npt)
+        reels_list, npt = ddoecontent.fetch_youtube_shorts(topic, page_token=npt)
         session['reels_previous_topic'] = topic
         session['reels_npt'] = npt
         session['reels_list'] = reels_list
@@ -338,54 +338,6 @@ def account():
     user = Users.query.filter_by(id=current_user.id).first()
     current_streak = ddoe.current_streak
     return render_template('account.html', current_streak=current_streak, user=user)
-
-
-@app.route('/load-articles', methods=['GET'])
-def load_articles():
-    topic = request.args.get('topic')
-    offset = int(request.args.get('offset', 0))
-    articles = fetch_next(topic, offset)  # Fetch next articles based on offset
-    return jsonify(articles)
-
-def fetch_next(topic, offset=0, decide = random.choice([True, False])):
-    userpref = UserPreferences.query.filter_by(user_id=current_user.id).first()
-    article_list = []
-    ai_article_titles = ['poop']  # Ensure unique titles for GPT-generated articles
-    
-    # Get keywords from the topic
-    topic_keywords = gpt.keywords(topic)
-    print(topic_keywords)
-
-    # Fetch blog articles
-    # Fetch blog articles and ensure we convert the returned tuple to lists
-    blog_titles, blog_urls = ddoecontent.fetch_blog_articles(topic_keywords, 1)  # Fetch 2 blog articles
-    blog_titles = list(blog_titles)  # Convert tuple to list
-    blog_urls = list(blog_urls)      # Convert tuple to list
-
-    # Randomly decide to either fetch a blog article or generate an AI article
-    if decide and blog_titles and ddoecontent.is_embeddable(blog_urls[0]):
-        blog_text, blog_media = ddoecontent.scrape_articles(blog_urls[0])
-        article_list.append({
-            'title': blog_titles[0],
-            'url': blog_urls[0],
-            'text': blog_text,
-            'media': blog_media
-        })
-        blog_titles.pop(0)  # Remove the title and URL that was used
-        blog_urls.pop(0)
-
-    else:
-        # Generate an AI article
-        ai_article = gpt.ddoearticle(topic, userpref.age, ai_article_titles)
-        try:
-            if ai_article[1] is not None and len(ai_article[1]) >= 25:
-                ai_article_titles.append(ai_article[0])
-                article_list.append({'title': ai_article[0], 'text': ai_article[1]})
-        except Exception as e:
-            print(f"Error generating AI article: {e}")
-
-    # Return the articles based on the offset
-    return article_list[offset:offset + 1]
 
 
 @login_required
@@ -436,15 +388,8 @@ def see_note():
 
 #INACTIVE ROUTES
 
-@login_required
-@views.route("/navbar")
-def navbar():
-    return render_template('index.html')
 
 
-@views.route('sidebar')
-def js():
-    return render_template('sidebar.html')
 
 
 

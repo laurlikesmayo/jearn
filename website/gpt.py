@@ -27,7 +27,7 @@ def chat(prompt, age, language):
     )
     return response.choices[0].message.content
 
-def create_test(prompt, age, format):
+def create_test(prompt, age, format, length=10):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -35,7 +35,7 @@ def create_test(prompt, age, format):
                 "role": "system",
                 "content": (
                     f"You are a teacher creating a test for a {age}-year-old student on the topic: '{prompt}'. "
-                    f"Provide exactly 10 questions only in JSON format. Each question should be straightforward, "
+                    f"Provide exactly {length} questions only in JSON format. Each question should be straightforward, "
                     "not open-ended, and should have a single, unambiguous correct answer. Do not include the answer choices"
                 )
             },
@@ -236,8 +236,9 @@ def ddoetopic(userid):
     )
     
     # Extract the JSON string and convert it to a Python dictionary
-    json_response = response.choices[0].message.content.strip()
-    topic = json.looads(json_response)['topic']
+    topic_response = response.choices[0].message.content.strip().replace("'", '"')
+    topic = json.loads(topic_response)
+    topic = topic["topic"]
     
     return topic
         
@@ -289,36 +290,65 @@ def summary(articletext):
     )
     return response.choices[0].message.content.strip()
 
+
 def ddoearticle(topic, age, previous_article_titles):
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=[     
-                {"role": "system", "content": f"You are an expert in the topic of {topic}. You are writing an insightful and unique blog article that draws on specific and nuanced experiences within this topic."},
-                {"role": "system", "content": f"Write an article on a highly niche and specific aspect of {topic}. Ensure that it is distinct from previous articles titled {previous_article_titles}. This article is written for a {age} year old"},
-                {"role": "user", "content": f"""
-                    Please generate the article in JSON format with the following structure:
+        messages=[
+            {"role": "system", "content": f"You are an expert writer and researcher on the topic of {topic}. Your task is to craft a highly specific and original blog article for a {age}-year-old audience."},
+            {"role": "user", "content": f"""
+                Please generate the article in **valid JSON format** using the following structure:
 
-                    {{
-                        "title": "string",
-                        "content": {{
-                            "introduction": "string",
-                            "sections": [
-                                {{
-                                    "section_title": "string",
-                                    "section_content": "string"
-                                }}
-                            ],
-                            "conclusion": "string"
-                        }}
+                {{
+                    "title": "string",
+                    "content": {{
+                        "introduction": "string",
+                        "sections": [
+                            {{
+                                "section_title": "string",
+                                "section_content": "string"
+                            }}
+                        ],
+                        "conclusion": "string"
                     }}
+                }}
 
-                    Write an article about a unique perspective on "{topic}", specifically focusing on an innovative or lesser-known area within the field. Be sure the article is not similar to the topics previously covered ({previous_article_titles}). Provide practical examples or recent developments, and format it according to the JSON structure above.
-                """}
-            ]        
+                Guidelines:
+                1. The article should focus on a **unique, niche aspect of {topic}** and avoid any overlap with previously written articles titled {previous_article_titles}.
+                2. Provide practical examples, specific details, or recent developments to make the article engaging and insightful.
+                3. Ensure the JSON output is strictly valid:
+                    - No trailing commas.
+                    - No unnecessary formatting like triple quotes, backticks, or language identifiers (e.g., `json`).
+                    - Directly output the JSON structure.
+
+                Write the article now and ensure it adheres to the JSON standard exactly as described.
+            """}
+        ]
     )
-    response = response.choices[0].message.content
-    response = json.loads(response)
-    return response
+
+    # Retrieve raw content
+    raw_response = response.choices[0].message.content
+
+    # Post-process: Remove formatting artifacts
+    sanitized_response = (
+        raw_response.strip("'''")
+        .strip('"""')
+        .strip('```')
+        .strip('json')
+    )
+
+    # Additional cleanup for trailing commas
+    sanitized_response = sanitized_response.replace(",\n}", "\n}").replace(",\n]", "\n]")
+
+    try:
+        # Parse and return valid JSON
+        parsed_response = json.loads(sanitized_response)
+        return parsed_response
+    except json.JSONDecodeError as e:
+        # If parsing fails, raise an error with the raw response
+        raise ValueError(f"JSON decoding failed. Raw response: {sanitized_response}") from e
+
+
 
 
 def generate_image(prompt, n=1, size="320x180"):
