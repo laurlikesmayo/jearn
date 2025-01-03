@@ -58,7 +58,7 @@ import requests
 
 def fetch_youtube_shorts(query, cached_ids=None, page_size=10, duration='short', page_token=None):
     all_reels = []
-    api_key = google_api  # Replace with your API key
+    api_key = google_api 
     search_url = 'https://www.googleapis.com/youtube/v3/search'
     video_details_url = 'https://www.googleapis.com/youtube/v3/videos'
 
@@ -79,6 +79,9 @@ def fetch_youtube_shorts(query, cached_ids=None, page_size=10, duration='short',
     
     if response.status_code == 200:
         results = response.json()
+        # for item in results['items']:
+        #     if item['id']['videoId'] not in cached_ids:
+        #         print(item['id']['videoId'])
         video_ids = [item['id']['videoId'] for item in results['items'] if item['id']['videoId'] not in cached_ids]
 
         # Get video details to filter out unavailable videos

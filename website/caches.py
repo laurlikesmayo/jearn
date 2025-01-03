@@ -172,7 +172,6 @@ def cache_youtube_shorts(reels, topic):
     cached_ids = cache.get(f'shorts:topic:{topic}:ids') or []
     for reel in reels:
         video_id = reel['video_id']
-        
         # Cache each unique reel individually
         if video_id not in cached_ids:
             cache_key = f'shorts:{video_id}'
@@ -184,14 +183,15 @@ def cache_youtube_shorts(reels, topic):
 
     return {"message": f"{len(reels)} shorts cached successfully!", "new_cached_count": len(reels)}
 
-def get_cached_shorts(topic, min_count=10, query='shorts'):
+def get_cached_shorts(topic, min_count=10):
     cached_ids_key = f'shorts:topic:{topic}:ids'
     cached_ids = cache.get(cached_ids_key) or []
+    print(cached_ids)
     reels = [cache.get(f'shorts:{vid_id}') for vid_id in cached_ids if cache.get(f'shorts:{vid_id}')]
 
     # Check if we have enough cached reels; fetch more if needed
     if len(reels) < min_count:
-        new_reels, _ = ddoecontent.fetch_youtube_shorts(query=query, cached_ids=cached_ids, page_size=min_count - len(reels))
+        new_reels, _ = ddoecontent.fetch_youtube_shorts(query=topic, cached_ids=cached_ids, page_size=min_count - len(reels))
         
         if new_reels:
             cache_youtube_shorts(new_reels, topic)

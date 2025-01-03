@@ -302,31 +302,12 @@ def reels():
         topic = request.form.get('topic')
         if topic == 'recommend':
             topic = gpt.ddoetopic(current_user.id)
-        previous_topic = session.get('reels_previous_topic', '')
-        
-        if topic != previous_topic:
-            # Reset the page token if the topic changes
-            prev_npt = None
-        else:
-            # Use the existing page token if the topic is the same
-            prev_npt = session.get('reels_npt', None)
-        
-        # Fetch results with the current topic and page token
-        reels_list, npt = ddoecontent.fetch_youtube_shorts(topic, page_token=prev_npt,)
-        
-        # Update session with the current state
-        session['reels_previous_topic'] = topic
-        session['reels_npt'] = npt  # Store the new page token
-        session['reels_list'] = reels_list
     elif 'ddoetopic' in session:
         topic = session.get('ddoetopic') 
-        npt = session.get('reels_npt', None)
-        reels_list, npt = ddoecontent.fetch_youtube_shorts(topic, page_token=npt)
-        session['reels_previous_topic'] = topic
-        session['reels_npt'] = npt
-        session['reels_list'] = reels_list
     else:
         return redirect(url_for('views.home'))
+    
+    reels_list = caches.get_cached_shorts(topic)
 
     return render_template('reels.html', reels_list=reels_list, topic=topic)
 
@@ -389,6 +370,41 @@ def see_note():
 #INACTIVE ROUTES
 
 
+#OLD REELS WITH NEXT PAGE TOKEN IN SIDE OF IT
+# @login_required
+# @views.route("/reels", methods = ['GET', 'POST'])
+# def reels():
+#     if request.method == 'POST':
+#         topic = request.form.get('topic')
+#         if topic == 'recommend':
+#             topic = gpt.ddoetopic(current_user.id)
+#         previous_topic = session.get('reels_previous_topic', '')
+        
+#         if topic != previous_topic:
+#             # Reset the page token if the topic changes
+#             prev_npt = None
+#         else:
+#             # Use the existing page token if the topic is the same
+#             prev_npt = session.get('reels_npt', None)
+        
+#         # Fetch results with the current topic and page token
+#         reels_list, npt = ddoecontent.fetch_youtube_shorts(topic, page_token=prev_npt,)
+        
+#         # Update session with the current state
+#         session['reels_previous_topic'] = topic
+#         session['reels_npt'] = npt  # Store the new page token
+#         session['reels_list'] = reels_list
+#     elif 'ddoetopic' in session:
+#         topic = session.get('ddoetopic') 
+#         npt = session.get('reels_npt', None)
+#         reels_list, npt = ddoecontent.fetch_youtube_shorts(topic, page_token=npt)
+#         session['reels_previous_topic'] = topic
+#         session['reels_npt'] = npt
+#         session['reels_list'] = reels_list
+#     else:
+#         return redirect(url_for('views.home'))
+
+#     return render_template('reels.html', reels_list=reels_list, topic=topic)
 
 
 
