@@ -362,19 +362,12 @@ def generate_image(prompt, n=1, size="320x180"):
     image_url = response['data'][0]['url']
     return image_url
 
-def ddoeword(user_id):
-    pref = UserPreferences.query.filter_by(user_id = user_id).first()
-    age = pref.age
-    ddoe = DDOE.query.filter_by(user_id = user_id).first()
-    if not ddoe:
-        previous_words = []
-    else:
-        previous_words = ddoe.previous_words
+def ddoeword():
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": f"You are an english robot which spits out one english vocabulary word at a time. "},
-            {"role": "user", "content": f"Generate a word that a {age} year old should learn, which is not the words {previous_words}"}
+            {"role": "user", "content": f"Generate a (slightly challenging) random vocabulary word that someone can learn"}
         ]
     )
     return response.choices[0].message.content

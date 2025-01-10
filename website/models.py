@@ -19,6 +19,7 @@ class Users(db.Model, UserMixin):
     preferences = db.relationship('UserPreferences', backref = 'preferences')
     dailytopic = db.relationship('DDOE', backref = 'preferences')
     notes = db.relationship('SavedContent', backref = 'savedcontent')
+    seencontent = db.relationship('SeenContent', backref='seencontent')
 
 
 
@@ -52,6 +53,17 @@ class SavedContent(db.Model, UserMixin):
     title = db.Column(db.String(500))
     content = db.Column(db.String(10000), default='') #video URL
     note = db.Column(db.String(10000))
+
+class SeenContent(db.Model, UserMixin):
+    id = db.Column('id', db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    #Will store the Cache ID's of this - for all the lists
+    past_articles = db.Column(MutableList.as_mutable(JSON), default=[])
+    past_reels = db.Column(MutableList.as_mutable(JSON), default=[]) 
+    past_topics = db.Column(MutableList.as_mutable(JSON), default=[])
+    past_questions= db.Column(MutableList.as_mutable(JSON), default=[])
+    past_words = db.Column(MutableList.as_mutable(JSON), default=[])
+
 
 
 #Caches Data Base
